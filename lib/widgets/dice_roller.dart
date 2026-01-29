@@ -8,6 +8,12 @@ import '../data/game_data.dart';
 import '../theme/app_theme.dart';
 import '../utils/roll_d6.dart';
 
+/// Courbe pour l’animation de rebond des dés : 0 → max → 0.
+class _BounceDownCurve extends Curve {
+  @override
+  double transformInternal(double t) => 4 * t * (1 - t);
+}
+
 class DiceRoller extends StatefulWidget {
   const DiceRoller({super.key});
 
@@ -21,6 +27,8 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
   bool? _isSuccess;
   bool? _isTriple1;
   bool? _isTriple6;
+  bool? _isOtherTriple;
+  int? _otherTripleValue;
   int _selectedCharacteristic = 3;
   int _bonus = 0;
   int _numDice = 3;
@@ -30,6 +38,8 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
   late AnimationController _diceAnimationController;
   late AnimationController _glowAnimationController;
   late Animation<double> _diceRotation;
+  late Animation<double> _diceTumble;
+  late Animation<double> _diceBounce;
   late Animation<double> _glowAnimation;
   final TextEditingController _characteristicController = TextEditingController(text: '3');
   final TextEditingController _bonusController = TextEditingController(text: '0');
@@ -55,6 +65,12 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
 
     _diceRotation = Tween<double>(begin: 0, end: 2 * pi).animate(
       CurvedAnimation(parent: _diceAnimationController, curve: Curves.easeInOut),
+    );
+    _diceTumble = Tween<double>(begin: 0, end: 5 * pi).animate(
+      CurvedAnimation(parent: _diceAnimationController, curve: Curves.easeInOut),
+    );
+    _diceBounce = Tween<double>(begin: 0, end: 24).animate(
+      CurvedAnimation(parent: _diceAnimationController, curve: _BounceDownCurve()),
     );
     _glowAnimation = Tween<double>(begin: 0.3, end: 0.8).animate(
       CurvedAnimation(parent: _glowAnimationController, curve: Curves.easeInOut),
@@ -108,6 +124,7 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
     final isTriple = _numDice == 3 && rolled[0] == rolled[1] && rolled[1] == rolled[2];
     final isTriple1 = isTriple && rolled[0] == 1;
     final isTriple6 = isTriple && rolled[0] == 6;
+    final isOtherTriple = isTriple && rolled[0] != 1 && rolled[0] != 6;
 
     setState(() {
       _lastRoll = rolled;
@@ -115,6 +132,8 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
       _isSuccess = total <= threshold;
       _isTriple1 = isTriple1;
       _isTriple6 = isTriple6;
+      _isOtherTriple = isOtherTriple;
+      _otherTripleValue = isOtherTriple ? rolled[0] : null;
       _isRolling = false;
       _rollingDice = rolled;
     });
@@ -160,11 +179,65 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
     );
   }
 
-  String _getRollDescription() {
+  /// Texte explicatif INS/MV pour 111 (intervention divine) selon le type de personnage.
+  String _getTriple1Title(String? characterType) {
+    switch (characterType) {
+      case 'Ange':
+        return '✨ 111 — INTERVENTION DIVINE ✨';
+      case 'Démon':
+        return '✨ 111 — INTERVENTION DIVINE ✨';
+      case 'Humain':
+        return '✨ 111 — INTERVENTION DIVINE ✨';
+      default:
+        return '✨ 111 — INTERVENTION DIVINE ✨';
+    }
+  }
+
+  String _getTriple1Subtitle(String? characterType) {
+    switch (characterType) {
+      case 'Ange':
+        return 'Réussite critique pour les anges ! Les forces célestes bénissent votre action.';
+      case 'Démon':
+        return 'Échec critique pour les démons. L\'intervention divine s\'oppose à vous.';
+      case 'Humain':
+        return 'Signe favorable pour les humains : bénédiction, la chance vous sourit.';
+      default:
+        return 'Intervention divine (l\'Unique). Selon votre camp : très bénéfique pour les anges, défavorable pour les démons, favorable pour les humains.';
+    }
+  }
+
+  /// Texte explicatif INS/MV pour 666 (intervention démoniaque) selon le type de personnage.
+  String _getTriple6Title(String? characterType) {
+    switch (characterType) {
+      case 'Ange':
+      case 'Démon':
+      case 'Humain':
+        return '🔥 666 — INTERVENTION DÉMONIAQUE 🔥';
+      default:
+        return '🔥 666 — INTERVENTION DÉMONIAQUE 🔥';
+    }
+  }
+
+  String _getTriple6Subtitle(String? characterType) {
+    switch (characterType) {
+      case 'Ange':
+        return 'Échec critique pour les anges. Les forces infernales s\'opposent à vous.';
+      case 'Démon':
+        return 'Réussite critique pour les démons ! Les forces infernales influencent le destin en votre faveur.';
+      case 'Humain':
+        return 'Signe défavorable pour les humains : malédiction, le sort s\'acharne.';
+      default:
+        return 'Intervention démoniaque (chiffre de la Bête). Très bénéfique pour les démons, défavorable pour les anges, défavorable pour les humains.';
+    }
+  }
+
+  String _getRollDescription(String? characterType) {
     if (_isTriple1 == true) {
-      return 'Les dés scintillent d\'une lumière divine... Un miracle se produit !';
+      return _getTriple1Subtitle(characterType);
     } else if (_isTriple6 == true) {
-      return 'Les dés s\'embrasent d\'une lueur infernale... Le destin bascule !';
+      return _getTriple6Subtitle(characterType);
+    } else if (_isOtherTriple == true && _otherTripleValue != null) {
+      return 'Triple $_otherTripleValue$_otherTripleValue$_otherTripleValue : selon les éditions INS/MV, certaines combinaisons identiques peuvent avoir des effets spéciaux. Consultez votre livre de règles.';
     } else if (_isSuccess == true) {
       return 'Les dés roulent favorablement... La chance vous sourit !';
     } else {
@@ -368,58 +441,68 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
             if (_isRolling || _lastRoll != null) ...[
               const SizedBox(height: 24),
               AnimatedBuilder(
-                animation: _diceRotation,
+                animation: _diceAnimationController,
                 builder: (context, child) {
                   final diceCount = _isRolling ? _rollingDice.length : _lastRoll!.length;
-                  return Transform.rotate(
-                    angle: _isRolling ? _diceRotation.value : 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            AppTheme.medievalBronze.withValues(alpha: 0.3),
-                            AppTheme.medievalGold.withValues(alpha: 0.2),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppTheme.medievalGold.withValues(alpha: 0.5),
-                          width: 2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.medievalDarkBrown.withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
+                  final tumble = _diceTumble.value;
+                  final bounce = _diceBounce.value;
+                  return Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppTheme.medievalBronze.withValues(alpha: 0.3),
+                          AppTheme.medievalGold.withValues(alpha: 0.2),
                         ],
                       ),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              for (int i = 0; i < diceCount; i++) ...[
-                                if (i > 0)
-                                  const Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 8),
-                                    child: Text(
-                                      '+',
-                                      style: TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppTheme.medievalDarkBrown,
-                                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppTheme.medievalGold.withValues(alpha: 0.5),
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.medievalDarkBrown.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            for (int i = 0; i < diceCount; i++) ...[
+                              if (i > 0)
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 8),
+                                  child: Text(
+                                    '+',
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.medievalDarkBrown,
                                     ),
                                   ),
-                                _buildDiceFace(
-                                  _isRolling ? _rollingDice[i] : _lastRoll![i],
-                                  _isRolling,
                                 ),
-                              ],
+                            if (_isRolling)
+                              Transform.translate(
+                                offset: Offset(0, bounce),
+                                child: Transform(
+                                  alignment: Alignment.center,
+                                  transform: Matrix4.identity()
+                                    ..setEntry(3, 2, 0.001)
+                                    ..rotateX(tumble + i * 0.6)
+                                    ..rotateY(tumble * 1.2 + i * 0.8),
+                                  child: _buildDiceFace(_rollingDice[i], true),
+                                ),
+                              )
+                            else
+                              _buildDiceFace(_lastRoll![i], false),
+                            ],
                               if (_bonus != 0) ...[
                                 const SizedBox(width: 12),
                                 Text(
@@ -475,7 +558,7 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
                                 ),
                               ),
                               child: Text(
-                                _getRollDescription(),
+                                _getRollDescription(character?.type),
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   fontSize: 14,
@@ -487,14 +570,14 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
                             const SizedBox(height: 12),
                             if (_isTriple1 == true)
                               _buildCriticalBanner(
-                                '✨ RÉUSSITE CRITIQUE DIVINE ✨',
-                                'Les forces célestes bénissent votre action !',
+                                _getTriple1Title(character?.type),
+                                _getTriple1Subtitle(character?.type),
                                 Colors.green,
                               )
                             else if (_isTriple6 == true)
                               _buildCriticalBanner(
-                                '🔥 RÉUSSITE CRITIQUE INFERNALE 🔥',
-                                'Les forces infernales influencent le destin !',
+                                _getTriple6Title(character?.type),
+                                _getTriple6Subtitle(character?.type),
                                 AppTheme.medievalRed,
                               )
                             else if (_isSuccess == true)
@@ -533,9 +616,8 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
                               ),
                           ],
                         ],
-                      ),
-                    ),
-                  );
+                      )
+                    );
                 },
               ),
             ],

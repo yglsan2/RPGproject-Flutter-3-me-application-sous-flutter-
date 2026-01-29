@@ -555,6 +555,20 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
     );
   }
 
+  /// Exemple de supérieurs adapté au type (Ange → Blandine…, Démon → Baal…, Humain → Indépendant…).
+  String _superiorLabelForType(String? type) {
+    switch (type) {
+      case 'Ange':
+        return 'Supérieur (Blandine, Michel, etc.)';
+      case 'Démon':
+        return 'Supérieur (Baal, Lilith, etc.)';
+      case 'Humain':
+        return 'Supérieur (Indépendant, etc.)';
+      default:
+        return 'Supérieur (archange ou prince)';
+    }
+  }
+
   Widget _buildSuperiorSelector(GameSystem game) {
     final superiors = game.superiors[_selectedCharacterType];
     if (superiors == null || superiors.isEmpty) {
@@ -586,9 +600,9 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                 children: [
                   Icon(Icons.star, color: AppTheme.medievalGold, size: 24),
                   const SizedBox(width: 8),
-                  const Text(
-                    'Supérieur (Blandine, Baal, etc.)',
-                    style: TextStyle(
+                  Text(
+                    _superiorLabelForType(_selectedCharacterType),
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: AppTheme.medievalDarkBrown,

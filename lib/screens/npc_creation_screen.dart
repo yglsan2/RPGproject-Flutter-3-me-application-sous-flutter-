@@ -92,6 +92,16 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
     // Ajouter d'autres limitations selon les règles
   ];
 
+  /// Descriptions des grades INS/MV pour les bulles explicatives.
+  static const Map<String, String> _gradeDescriptions = {
+    '0': 'Grade 0 — Personnage de base, le plus faible dans la hiérarchie. Serviteur ou humain sans rang particulier.',
+    '1': 'Grade 1 — Premier échelon au-dessus de la base. Un peu plus d\'influence et de responsabilités.',
+    '2': 'Grade 2 — Grade intermédiaire. Responsabilités accrues, souvent chef de petit groupe.',
+    '3': 'Grade 3 — Haut grade, proche du Supérieur. Grande influence et pouvoirs renforcés.',
+    'AVATAR': 'Archange (anges) / Avatar (démons) — Forme la plus puissante : incarnation ou émanation directe du Supérieur. Réservé aux personnages majeurs.',
+    'ARCHANGE': 'Archange — Pour les anges : forme la plus élevée, proche de la divinité. Pour les démons, voir Avatar.',
+  };
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -192,7 +202,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                 children: [
                   ...['ANGE', 'DEMON', 'HUMAIN', 'AUTRE'].map((type) {
                     return _buildSelectableButton(
-                      label: type,
+                      label: type == 'ANGE' ? 'Anges' : type == 'DEMON' ? 'Démons' : type == 'HUMAIN' ? 'Humains' : 'Autre',
                       isSelected: _selectedType == type,
                       onTap: () => setState(() {
                         _selectedType = type;
@@ -203,22 +213,17 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                     );
                   }),
                   _buildSelectableButton(
-                    label: 'INDIFFÉRENT',
+                    label: 'Tirage au sort',
                     isSelected: false,
                     onTap: () {
-                      final allTypes = ['ANGE', 'DEMON', 'HUMAIN'] + _otherSubTypes;
-                      final randomType = allTypes[_random.nextInt(allTypes.length)];
-                      if (_otherSubTypes.contains(randomType)) {
-                        setState(() {
-                          _selectedType = 'AUTRE';
-                          _selectedSubType = randomType;
-                        });
-                      } else {
-                        setState(() {
-                          _selectedType = randomType;
-                          _selectedSubType = null;
-                        });
-                      }
+                      final mainTypes = ['ANGE', 'DEMON', 'HUMAIN', 'AUTRE'];
+                      final type = mainTypes[_random.nextInt(mainTypes.length)];
+                      setState(() {
+                        _selectedType = type;
+                        _selectedSubType = type == 'AUTRE'
+                            ? _otherSubTypes[_random.nextInt(_otherSubTypes.length)]
+                            : null;
+                      });
                     },
                   ),
                 ],
@@ -312,6 +317,10 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                   color: AppTheme.medievalDarkBrown,
                 ),
               ),
+              _buildSectionDescription(
+                'Personnalisez la catégorie « Autre » : choisissez un sous-type (Serviteur de Dieu, Incube, Mort-vivant…) '
+                'ou utilisez « Tirage au sort » pour en sélectionner un aléatoirement.',
+              ),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
@@ -319,13 +328,13 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                 children: [
                   ..._otherSubTypes.map((subType) {
                     return _buildSelectableButton(
-                      label: subType.toUpperCase(),
+                      label: subType,
                       isSelected: _selectedSubType == subType,
                       onTap: () => setState(() => _selectedSubType = subType),
                     );
                   }),
                   _buildSelectableButton(
-                    label: 'RANDOM',
+                    label: 'Tirage au sort',
                     isSelected: false,
                     onTap: () {
                       setState(() {
@@ -343,6 +352,13 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
   }
 
   Widget _buildGradeSelector() {
+    const gradeOptions = [
+      ('0', 'Grade 0'),
+      ('1', 'Grade 1'),
+      ('2', 'Grade 2'),
+      ('3', 'Grade 3'),
+      ('AVATAR', 'Archange (avatar)'),
+    ];
     return Card(
       child: Container(
         decoration: BoxDecoration(
@@ -368,26 +384,36 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                 ),
               ),
               _buildSectionDescription(
-                'Niveau hiérarchique : 0 (base) à 3, ou Avatar (très puissant) / Archange pour les anges. '
-                'Plus le grade est élevé, plus le personnage a d\'influence et de pouvoirs.',
+                'Niveau hiérarchique : Grade 0 (base) à Grade 3, ou Archange (avatar) pour la forme la plus puissante. '
+                'Passez le curseur sur chaque grade pour plus de détails.',
               ),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  ...['0', '1', '2', '3', 'AVATAR', 'ARCHANGE'].map((grade) {
-                    return _buildSelectableButton(
-                      label: grade,
-                      isSelected: _selectedGrade == grade,
-                      onTap: () => setState(() => _selectedGrade = grade),
+                  ...gradeOptions.map((option) {
+                    final value = option.$1;
+                    final label = option.$2;
+                    final tooltip = _gradeDescriptions[value] ?? _gradeDescriptions['AVATAR'];
+                    return Tooltip(
+                      message: tooltip ?? '',
+                      preferBelow: false,
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: _buildSelectableButton(
+                          label: label,
+                          isSelected: _selectedGrade == value,
+                          onTap: () => setState(() => _selectedGrade = value),
+                        ),
+                      ),
                     );
                   }),
                   _buildSelectableButton(
-                    label: 'RANDOM',
+                    label: 'Tirage au sort',
                     isSelected: false,
                     onTap: () {
-                      final grades = ['0', '1', '2', '3', 'AVATAR', 'ARCHANGE'];
+                      const grades = ['0', '1', '2', '3', 'AVATAR'];
                       setState(() => _selectedGrade = grades[_random.nextInt(grades.length)]);
                     },
                   ),
@@ -398,6 +424,36 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
         ),
       ),
     );
+  }
+
+  /// Titre / exemple de supérieurs adapté au type (Ange → Blandine…, Démon → Baal…).
+  String _superiorTitleForType(String? type) {
+    switch (type) {
+      case 'ANGE':
+        return 'Supérieur (Blandine, Michel, etc.)';
+      case 'DEMON':
+        return 'Supérieur (Baal, Lilith, etc.)';
+      case 'HUMAIN':
+        return 'Supérieur (Indépendant, etc.)';
+      default:
+        return 'Sélectionner un supérieur';
+    }
+  }
+
+  /// Bulle d’information sur le supérieur, adaptée au type.
+  String _superiorDescriptionForType(String? type) {
+    switch (type) {
+      case 'ANGE':
+        return 'Votre Archange (ex. Blandine, Michel, Dominique…). Détermine vos pouvoirs et votre rôle en jeu. '
+            'Chaque supérieur a des domaines et des capacités spécifiques.';
+      case 'DEMON':
+        return 'Votre Prince démoniaque (ex. Baal, Lilith, Mammon…). Détermine vos pouvoirs et votre rôle en jeu. '
+            'Chaque supérieur a des domaines et des capacités spécifiques.';
+      case 'HUMAIN':
+        return 'Votre orientation (Indépendant, Rechercheur, Croyant…). Détermine vos affinités et votre rôle en jeu.';
+      default:
+        return 'Votre Archange (anges) ou Prince démoniaque (démons). Détermine vos pouvoirs et votre rôle en jeu.';
+    }
   }
 
   Widget _buildSuperiorSelector() {
@@ -426,9 +482,9 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
             children: [
               Row(
                 children: [
-                  const Text(
-                    'SÉLECTIONNER UN SUPÉRIEUR',
-                    style: TextStyle(
+                  Text(
+                    _superiorTitleForType(_selectedType),
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: AppTheme.medievalDarkBrown,
@@ -436,7 +492,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                   ),
                   const Spacer(),
                   _buildSelectableButton(
-                    label: 'RANDOM',
+                    label: 'Tirage au sort',
                     isSelected: false,
                     onTap: () {
                       if (superiors.isNotEmpty) {
@@ -447,8 +503,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                 ],
               ),
               _buildSectionDescription(
-                'Votre Archange (anges) ou Prince démoniaque (démons). Détermine vos pouvoirs et votre rôle en jeu. '
-                'Chaque supérieur a des domaines et des capacités spécifiques.',
+                _superiorDescriptionForType(_selectedType),
               ),
               const SizedBox(height: 12),
               ...superiors.take(10).map((superior) {
@@ -473,6 +528,30 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
         ),
       ),
     );
+  }
+
+  String _gradeDisplayLabel(String? value) {
+    if (value == null) return '—';
+    switch (value) {
+      case '0': return 'Grade 0';
+      case '1': return 'Grade 1';
+      case '2': return 'Grade 2';
+      case '3': return 'Grade 3';
+      case 'AVATAR': return 'Archange (avatar)';
+      case 'ARCHANGE': return 'Archange (avatar)';
+      default: return value;
+    }
+  }
+
+  String _typeDisplayLabel(String? type) {
+    if (type == null) return '—';
+    switch (type) {
+      case 'ANGE': return 'Anges';
+      case 'DEMON': return 'Démons';
+      case 'HUMAIN': return 'Humains';
+      case 'AUTRE': return _selectedSubType != null ? 'Autre ($_selectedSubType)' : 'Autre';
+      default: return type;
+    }
   }
 
   Widget _buildPreviewCard() {
@@ -585,8 +664,8 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  _previewRow('Type', _selectedType ?? 'Non choisi'),
-                  _previewRow('Grade', _selectedGrade ?? 'Non choisi'),
+                  _previewRow('Type', _typeDisplayLabel(_selectedType)),
+                  _previewRow('Grade', _gradeDisplayLabel(_selectedGrade)),
                   _previewRow('Supérieur', _selectedSuperior ?? 'Non choisi'),
                   _previewRow('PNJ amoindri', _npcDiminished ? 'Oui' : 'Non'),
                   const SizedBox(height: 8),

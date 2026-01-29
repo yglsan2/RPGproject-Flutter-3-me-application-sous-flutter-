@@ -137,6 +137,7 @@ class ArchetypeSelector extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(Icons.star, color: AppTheme.medievalGold, size: 18),
                                       const SizedBox(width: 8),
