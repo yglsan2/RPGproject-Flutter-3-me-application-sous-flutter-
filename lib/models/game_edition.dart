@@ -3,6 +3,8 @@ class GameEdition {
   final String name;
   final String year;
   final String description;
+  /// Texte optionnel : ce qui change par rapport à l'édition précédente (ex. "Par rapport à la v4 : …").
+  final String? changesFromPrevious;
   final List<String> statNames;
   final Map<String, int> defaultStats;
   final Map<String, Map<String, Archetype>> archetypes;
@@ -12,6 +14,7 @@ class GameEdition {
     required this.name,
     required this.year,
     required this.description,
+    this.changesFromPrevious,
     required this.statNames,
     required this.defaultStats,
     required this.archetypes,
@@ -23,6 +26,7 @@ class GameEdition {
       name: json['name'],
       year: json['year'],
       description: json['description'],
+      changesFromPrevious: json['changesFromPrevious'] as String?,
       statNames: List<String>.from(json['statNames']),
       defaultStats: Map<String, int>.from(json['defaultStats']),
       archetypes: (json['archetypes'] as Map<String, dynamic>).map(
@@ -37,6 +41,7 @@ class GameEdition {
       'name': name,
       'year': year,
       'description': description,
+      'changesFromPrevious': changesFromPrevious,
       'statNames': statNames,
       'defaultStats': defaultStats,
       'archetypes': archetypes.map((key, value) => MapEntry(key, value.map((k, v) => MapEntry(k, v.toJson())))),

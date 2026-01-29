@@ -8,6 +8,8 @@ import '../models/character.dart';
 import '../services/character_generator_service.dart';
 import '../services/name_generator_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/stat_descriptions.dart';
+import '../utils/roll_d6.dart';
 import 'character_detail_screen.dart';
 
 class NPCCreationScreen extends StatefulWidget {
@@ -31,8 +33,13 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
     'PR': 0, // Présence
     'AP': 0, // Apparence (?)
   };
-  List<String> _selectedPowers = [];
-  String? _limitation;
+  /// Pouvoirs par slot (1-5). Clé = numéro de pouvoir, valeur = nom du pouvoir.
+  final Map<int, String?> _powerSelections = {1: null, 2: null, 3: null, 4: null, 5: null};
+  /// Pour le pouvoir 2 : true = table Supérieur, false = table Générale.
+  bool _power2UseSuperior = false;
+  /// Limitation : false = non, true = oui avec _limitationName.
+  bool _hasLimitation = false;
+  String? _limitationName;
   bool _npcDiminished = true;
   final Random _random = Random();
 
@@ -98,6 +105,13 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
           ],
         ),
         actions: [
+          TextButton.icon(
+            onPressed: _generateFullRandomNPC,
+            icon: const Icon(Icons.casino, color: AppTheme.medievalGold, size: 20),
+            label: const Text('Tout Aléatoire'),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.medievalGold),
+          ),
+          const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.save, color: AppTheme.medievalGold),
             onPressed: _generateNPC,
@@ -119,6 +133,8 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            _buildPreviewCard(),
+            const SizedBox(height: 16),
             _buildTypeSelector(),
             const SizedBox(height: 16),
             _buildNPCOptionsCard(),
@@ -165,6 +181,10 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                   color: AppTheme.medievalDarkBrown,
                 ),
               ),
+              _buildSectionDescription(
+                'Ange = serviteur du Ciel (Magna Veritas). Démon = serviteur de l\'Enfer (In Nomine Satanis). '
+                'Humain = sans allégeance surnaturelle. Autre = sous-types spéciaux (incube, mort-vivant, familier…).',
+              ),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
@@ -186,7 +206,6 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                     label: 'INDIFFÉRENT',
                     isSelected: false,
                     onTap: () {
-                      // Randomiser parmi tous les types et sous-types
                       final allTypes = ['ANGE', 'DEMON', 'HUMAIN'] + _otherSubTypes;
                       final randomType = allTypes[_random.nextInt(allTypes.length)];
                       if (_otherSubTypes.contains(randomType)) {
@@ -204,13 +223,47 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                   ),
                 ],
               ),
+              if (_selectedType != null)
+                Consumer<GameProvider>(
+                  builder: (context, gameProvider, _) {
+                    final game = gameProvider.currentGame;
+                    if (game == null) return const SizedBox();
+                    final typeKey = _selectedType == 'ANGE' ? 'Ange' : _selectedType == 'DEMON' ? 'Démon' : 'Humain';
+                    final desc = game.characterTypeDescriptions[typeKey];
+                    if (desc == null) return const SizedBox();
+                    return _buildSectionDescription(desc);
+                  },
+                ),
             ],
           ),
         ),
       ),
     );
-
   }
+
+  Widget _buildSectionDescription(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 18, color: AppTheme.medievalGold),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 12,
+                color: AppTheme.medievalDarkBrown.withValues(alpha: 0.9),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildNPCOptionsCard() {
     return Card(
       child: Container(
@@ -314,6 +367,10 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                   color: AppTheme.medievalDarkBrown,
                 ),
               ),
+              _buildSectionDescription(
+                'Niveau hiérarchique : 0 (base) à 3, ou Avatar (très puissant) / Archange pour les anges. '
+                'Plus le grade est élevé, plus le personnage a d\'influence et de pouvoirs.',
+              ),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
@@ -389,6 +446,10 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                   ),
                 ],
               ),
+              _buildSectionDescription(
+                'Votre Archange (anges) ou Prince démoniaque (démons). Détermine vos pouvoirs et votre rôle en jeu. '
+                'Chaque supérieur a des domaines et des capacités spécifiques.',
+              ),
               const SizedBox(height: 12),
               ...superiors.take(10).map((superior) {
                 return RadioListTile<String>(
@@ -414,100 +475,261 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
     );
   }
 
-  Widget _buildCharacteristicsSelector() {
+  Widget _buildPreviewCard() {
+    final gameProvider = Provider.of<GameProvider>(context);
+    final game = gameProvider.currentGame;
+    final edition = game?.getEdition(gameProvider.currentEditionId ?? (game?.editions.isEmpty ?? true ? '' : game!.editions.first.id));
+    final statNames = edition?.statNames ?? ['Force', 'Volonté', 'Agilité', 'Perception', 'Présence', 'Apparence'];
+    final caracs = statNames.map((n) => _characteristics[n] ?? 0).where((v) => v > 0).length;
+    final powersCount = _powerSelections.values.whereType<String>().where((s) => s.isNotEmpty).length;
     return Card(
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.medievalCream,
-              AppTheme.medievalCream.withValues(alpha: 0.7),
-            ],
+      child: InkWell(
+        onTap: () => _showPreviewSheet(),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.medievalGold.withValues(alpha: 0.15),
+                AppTheme.medievalBronze.withValues(alpha: 0.1),
+              ],
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Text(
-                    'SÉLECTIONNER UNE CARAC OU +',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: AppTheme.medievalDarkBrown,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.preview, color: AppTheme.medievalGold, size: 24),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Aperçu de la fiche',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: AppTheme.medievalDarkBrown,
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  _buildSelectableButton(
-                    label: 'RANDOM',
-                    isSelected: false,
-                    onTap: () {
-                      setState(() {
-                        _characteristics.forEach((key, value) {
-                          _characteristics[key] = _random.nextInt(6) + 1;
-                        });
-                      });
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Table(
-                border: TableBorder.all(color: AppTheme.medievalBronze.withValues(alpha: 0.3)),
-                children: [
-                  TableRow(
-                    children: [
-                      const TableCell(child: SizedBox()),
-                      ...List.generate(6, (i) => TableCell(
-                        child: Center(
-                          child: Text(
-                            '${i + 1}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      )),
-                    ],
-                  ),
-                  ..._characteristics.entries.map((entry) {
-                    return TableRow(
-                      children: [
-                        TableCell(
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              entry.key,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                        ...List.generate(6, (i) {
-                          final value = i + 1;
-                          return TableCell(
-                            child: Radio<int>(
-                              value: value,
-                              groupValue: entry.value == 0 ? null : entry.value,
-                              onChanged: (newValue) {
-                                setState(() {
-                                  _characteristics[entry.key] = newValue ?? 0;
-                                });
-                              },
-                              activeColor: AppTheme.medievalGold,
-                            ),
-                          );
-                        }),
-                      ],
-                    );
-                  }),
-                ],
-              ),
-            ],
+                    const Spacer(),
+                    Text(
+                      'Tout modifier',
+                      style: TextStyle(fontSize: 12, color: AppTheme.medievalGold, fontWeight: FontWeight.w500),
+                    ),
+                    const Icon(Icons.arrow_forward, size: 16, color: AppTheme.medievalGold),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _previewChip('Type', _selectedType ?? '—'),
+                    _previewChip('Grade', _selectedGrade ?? '—'),
+                    _previewChip('Supérieur', _selectedSuperior ?? '—'),
+                    _previewChip('Caracs', caracs > 0 ? '$caracs/6' : '—'),
+                    _previewChip('Pouvoirs', powersCount > 0 ? '$powersCount' : '—'),
+                    _previewChip('Limitation', _hasLimitation && _limitationName != null ? _limitationName! : 'Non'),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _previewChip(String label, String value) {
+    return Chip(
+      avatar: Icon(Icons.edit, size: 16, color: AppTheme.medievalGold),
+      label: Text('$label: $value', style: const TextStyle(fontSize: 12)),
+      backgroundColor: AppTheme.medievalBronze.withValues(alpha: 0.2),
+    );
+  }
+
+  void _showPreviewSheet() {
+    final gameProvider = Provider.of<GameProvider>(context);
+    final game = gameProvider.currentGame;
+    final edition = game?.getEdition(gameProvider.currentEditionId ?? (game?.editions.isEmpty ?? true ? '' : game!.editions.first.id));
+    final statNames = edition?.statNames ?? ['Force', 'Volonté', 'Agilité', 'Perception', 'Présence', 'Apparence'];
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.6,
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          boxShadow: [BoxShadow(color: AppTheme.medievalGold.withValues(alpha: 0.2), blurRadius: 12)],
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Icon(Icons.preview, color: AppTheme.medievalGold),
+                  const SizedBox(width: 8),
+                  const Text('Mode aperçu – Fiche PNJ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  const Spacer(),
+                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  _previewRow('Type', _selectedType ?? 'Non choisi'),
+                  _previewRow('Grade', _selectedGrade ?? 'Non choisi'),
+                  _previewRow('Supérieur', _selectedSuperior ?? 'Non choisi'),
+                  _previewRow('PNJ amoindri', _npcDiminished ? 'Oui' : 'Non'),
+                  const SizedBox(height: 8),
+                  const Text('Caractéristiques', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ...statNames.map((n) => _previewRow(n, '${_characteristics[n] ?? 0}')),
+                  const SizedBox(height: 8),
+                  const Text('Pouvoirs', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ..._powerSelections.entries.map((e) => _previewRow('Pouvoir ${e.key}', e.value ?? '—')),
+                  _previewRow('Limitation', _hasLimitation && _limitationName != null ? _limitationName! : 'Non'),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _previewRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: AppTheme.medievalDarkBrown)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCharacteristicsSelector() {
+    return Consumer<GameProvider>(
+      builder: (context, gameProvider, _) {
+        final game = gameProvider.currentGame;
+        final editionId = gameProvider.currentEditionId ?? (game?.editions.isEmpty ?? true ? '' : game!.editions.first.id);
+        final edition = game?.getEdition(editionId);
+        final statNames = edition?.statNames ?? ['Force', 'Volonté', 'Agilité', 'Perception', 'Présence', 'Apparence'];
+        return Card(
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.medievalCream,
+                  AppTheme.medievalCream.withValues(alpha: 0.7),
+                ],
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Text(
+                        'SÉLECTIONNER UNE CARAC OU +',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: AppTheme.medievalDarkBrown,
+                        ),
+                      ),
+                      const Spacer(),
+                      _buildSelectableButton(
+                        label: 'RANDOM',
+                        isSelected: false,
+                        onTap: () {
+                          setState(() {
+                            for (final name in statNames) {
+                              _characteristics[name] = RollD6.roll();
+                            }
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  _buildSectionDescription(
+                    'Les 6 caractéristiques du personnage (Force, Volonté, Agilité, etc.). Choisir une valeur de 1 à 6 par ligne. '
+                    'Les noms dépendent de l\'édition choisie à l\'accueil (v1–v3 : Intelligence ; v4 : Rêve ; v5 : Empathie ; v6 : Intuition).',
+                  ),
+                  const SizedBox(height: 12),
+                  Table(
+                    border: TableBorder.all(color: AppTheme.medievalBronze.withValues(alpha: 0.3)),
+                    children: [
+                      TableRow(
+                        children: [
+                          const TableCell(child: SizedBox()),
+                          ...List.generate(6, (i) => TableCell(
+                            child: Center(
+                              child: Text(
+                                '${i + 1}',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          )),
+                        ],
+                      ),
+                      ...statNames.map((statName) {
+                        final value = _characteristics[statName] ?? 0;
+                        return TableRow(
+                          children: [
+                            TableCell(
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Tooltip(
+                                  message: StatDescriptions.getOrDefault(statName),
+                                  preferBelow: false,
+                                  child: MouseRegion(
+                                    cursor: SystemMouseCursors.help,
+                                    child: Text(
+                                      statName,
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            ...List.generate(6, (i) {
+                              final v = i + 1;
+                              return TableCell(
+                                child: Radio<int>(
+                                  value: v,
+                                  groupValue: value == 0 ? null : value,
+                                  onChanged: (newValue) {
+                                    setState(() => _characteristics[statName] = newValue ?? 0);
+                                  },
+                                  activeColor: AppTheme.medievalGold,
+                                ),
+                              );
+                            }),
+                          ],
+                        );
+                      }),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -554,8 +776,8 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
   }
 
   Widget _buildPowerSelector(int powerNumber, {bool isSuperior = false, bool canChooseTable = false, bool isGeneral = false}) {
-    String? selectedPower;
-    String selectedTable = isSuperior ? 'SUPÉRIEUR' : 'GÉNÉRALE';
+    final useSuperiorTable = isSuperior || (canChooseTable && _power2UseSuperior);
+    final selectedPower = _powerSelections[powerNumber];
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -580,14 +802,14 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
               children: [
                 _buildSelectableButton(
                   label: 'TABLE GÉNÉRALE',
-                  isSelected: selectedTable == 'GÉNÉRALE',
-                  onTap: () => setState(() => selectedTable = 'GÉNÉRALE'),
+                  isSelected: !_power2UseSuperior,
+                  onTap: () => setState(() => _power2UseSuperior = false),
                 ),
                 const SizedBox(width: 8),
                 _buildSelectableButton(
                   label: 'TABLE SUPÉRIEUR',
-                  isSelected: selectedTable == 'SUPÉRIEUR',
-                  onTap: () => setState(() => selectedTable = 'SUPÉRIEUR'),
+                  isSelected: _power2UseSuperior,
+                  onTap: () => setState(() => _power2UseSuperior = true),
                 ),
               ],
             ),
@@ -599,16 +821,16 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                 label: 'RANDOM',
                 isSelected: false,
                 onTap: () {
-                  if (isSuperior || selectedTable == 'SUPÉRIEUR') {
-                    selectedPower = _superiorPowers[_random.nextInt(_superiorPowers.length)];
+                  String? result;
+                  if (useSuperiorTable) {
+                    result = _superiorPowers[_random.nextInt(_superiorPowers.length)];
                   } else {
-                    // Tirage avec dés pour table générale
-                    final roll = _random.nextInt(6) + 1;
-                    final hundreds = _random.nextInt(6) + 1;
+                    final roll = RollD6.roll();
+                    final hundreds = RollD6.roll();
                     final key = hundreds * 100 + roll * 10 + powerNumber;
-                    selectedPower = _generalPowers[key];
+                    result = _generalPowers[key];
                   }
-                  setState(() {});
+                  setState(() => _powerSelections[powerNumber] = result);
                 },
               ),
               if (isGeneral) ...[
@@ -617,12 +839,11 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                   label: 'SEMI ALÉATOIRE',
                   isSelected: false,
                   onTap: () {
-                    // Logique semi-aléatoire
-                    final roll = _random.nextInt(6) + 1;
-                    final hundreds = _random.nextInt(6) + 1;
+                    final roll = RollD6.roll();
+                    final hundreds = RollD6.roll();
                     final key = hundreds * 100 + roll * 10 + powerNumber;
-                    selectedPower = _generalPowers[key];
-                    setState(() {});
+                    final result = _generalPowers[key];
+                    setState(() => _powerSelections[powerNumber] = result);
                   },
                 ),
               ],
@@ -630,16 +851,14 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
               _buildSelectableButton(
                 label: 'CHOISIR',
                 isSelected: false,
-                onTap: () {
-                  _showPowerSelectionDialog(powerNumber, isSuperior || selectedTable == 'SUPÉRIEUR');
-                },
+                onTap: () => _showPowerSelectionDialog(powerNumber, useSuperiorTable),
               ),
             ],
           ),
-          if (selectedPower != null) ...[
+          if (selectedPower != null && selectedPower.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              selectedPower!,
+              selectedPower,
               style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.medievalGold),
             ),
           ],
@@ -673,34 +892,38 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                   color: AppTheme.medievalDarkBrown,
                 ),
               ),
+              _buildSectionDescription(
+                'Handicap optionnel (ex. Accès de colère) qui peut donner des avantages en jeu ou compliquer la partie. '
+                'Non = aucun ; Oui = choisir dans la liste.',
+              ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Radio<String>(
-                    value: 'NON',
-                    groupValue: _limitation,
-                    onChanged: (value) => setState(() => _limitation = value),
+                  Radio<bool>(
+                    value: false,
+                    groupValue: _hasLimitation,
+                    onChanged: (value) => setState(() => _hasLimitation = false),
                     activeColor: AppTheme.medievalGold,
                   ),
                   const Text('NON'),
                   const SizedBox(width: 24),
-                  Radio<String>(
-                    value: 'OUI',
-                    groupValue: _limitation,
-                    onChanged: (value) => setState(() => _limitation = value),
+                  Radio<bool>(
+                    value: true,
+                    groupValue: _hasLimitation,
+                    onChanged: (value) => setState(() => _hasLimitation = true),
                     activeColor: AppTheme.medievalGold,
                   ),
                   const Text('OUI'),
                 ],
               ),
-              if (_limitation == 'OUI') ...[
+              if (_hasLimitation) ...[
                 const SizedBox(height: 12),
                 ..._limitations.map((limitation) {
                   return RadioListTile<String>(
                     title: Text(limitation),
                     value: limitation,
-                    groupValue: _limitation,
-                    onChanged: (value) => setState(() => _limitation = value),
+                    groupValue: _limitationName,
+                    onChanged: (value) => setState(() => _limitationName = value),
                     activeColor: AppTheme.medievalGold,
                   );
                 }),
@@ -785,12 +1008,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
               return ListTile(
                 title: Text(power),
                 onTap: () {
-                  setState(() {
-                    if (_selectedPowers.length < powerNumber) {
-                      _selectedPowers.addAll(List.filled(powerNumber - _selectedPowers.length, ''));
-                    }
-                    _selectedPowers[powerNumber - 1] = power;
-                  });
+                  setState(() => _powerSelections[powerNumber] = power);
                   Navigator.pop(context);
                 },
               );
@@ -799,6 +1017,85 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
         ),
       ),
     );
+  }
+
+  /// Crée un PNJ entièrement aléatoire (type, grade, supérieur, caractéristiques avec jets auto, pouvoirs…) puis ouvre la fiche.
+  Future<void> _generateFullRandomNPC() async {
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final characterProvider = Provider.of<CharacterProvider>(context, listen: false);
+    final game = gameProvider.currentGame;
+    if (game == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Aucun système de jeu sélectionné')));
+      return;
+    }
+    final editionId = gameProvider.currentEditionId ?? (game.editions.isEmpty ? '' : game.editions.first.id);
+    final edition = game.getEdition(editionId);
+    if (edition == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Édition non trouvée')));
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.casino, color: AppTheme.medievalGold),
+            SizedBox(width: 8),
+            Text('PNJ Tout Aléatoire'),
+          ],
+        ),
+        content: const Text(
+          'Créer un PNJ entièrement aléatoire ? Type, grade, supérieur, caractéristiques (jets de dés automatiques), pouvoirs et nom seront tirés au sort. '
+          'Vous pourrez tout modifier sur la fiche ensuite.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          FilledButton.icon(
+            onPressed: () => Navigator.pop(ctx, true),
+            icon: const Icon(Icons.casino, size: 20),
+            label: const Text('Générer le PNJ'),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.medievalGold, foregroundColor: AppTheme.medievalDarkBrown),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    const types = ['ANGE', 'DEMON', 'HUMAIN'];
+    final characterTypeKey = types[_random.nextInt(types.length)];
+    final characterType = characterTypeKey == 'ANGE' ? 'Ange' : characterTypeKey == 'DEMON' ? 'Démon' : 'Humain';
+    final superiorList = game.superiors[characterType];
+    String? superiorOverride;
+    if (superiorList != null && superiorList.isNotEmpty) {
+      superiorOverride = superiorList[_random.nextInt(superiorList.length)];
+    }
+    final archMap = edition.archetypes[characterType];
+    String? archetypeName;
+    bool useArchetype = false;
+    if (archMap != null && archMap.isNotEmpty) {
+      final names = archMap.keys.toList();
+      archetypeName = names[_random.nextInt(names.length)];
+      useArchetype = true;
+    }
+    try {
+      final character = CharacterGeneratorService.generateCharacter(
+        gameSystem: game,
+        editionId: editionId,
+        characterType: characterType,
+        archetypeName: archetypeName,
+        isNPC: true,
+        useArchetype: useArchetype,
+        npcDiminished: _npcDiminished,
+        superiorOverride: superiorOverride,
+      );
+      character.name = NameGeneratorService.generate();
+      if (superiorOverride != null) character.superior = superiorOverride;
+      characterProvider.setCurrentCharacter(character);
+      if (!mounted) return;
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CharacterDetailScreen()));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PNJ aléatoire créé — modifiez la fiche si besoin.')));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+    }
   }
 
   void _generateNPC() {
@@ -820,19 +1117,15 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
       return;
     }
 
-    // Convertir les caractéristiques
+    // Caractéristiques : clés = noms complets (édition) ou abréviations (legacy)
+    final abbrToName = {
+      'FO': 'Force', 'VO': 'Volonté', 'AG': 'Agilité',
+      'PE': 'Perception', 'PR': 'Présence', 'AP': 'Apparence',
+    };
     final characteristics = <String, int>{};
     _characteristics.forEach((key, value) {
       if (value > 0) {
-        // Mapper les abréviations aux noms complets
-        final statName = {
-          'FO': 'Force',
-          'VO': 'Volonté',
-          'AG': 'Agilité',
-          'PE': 'Perception',
-          'PR': 'Présence',
-          'AP': 'Apparence',
-        }[key] ?? key;
+        final statName = abbrToName[key] ?? key;
         characteristics[statName] = value;
       }
     });
@@ -859,8 +1152,12 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
     if (characteristics.isNotEmpty) {
       character.characteristics = characteristics;
     }
-    if (_selectedPowers.isNotEmpty) {
-      character.powers = _selectedPowers.map((name) => Power(name: name, costPP: 1)).toList();
+    final powersList = _powerSelections.values.whereType<String>().where((s) => s.isNotEmpty).toList();
+    if (powersList.isNotEmpty) {
+      character.powers = powersList.map((name) => Power(name: name, costPP: 1)).toList();
+    }
+    if (_limitationName != null && _limitationName!.isNotEmpty) {
+      character.motivation = (character.motivation.isEmpty ? '' : '${character.motivation}\n') + 'Limitation: $_limitationName';
     }
 
     characterProvider.setCurrentCharacter(character);

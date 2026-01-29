@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../utils/stat_descriptions.dart';
 
-class StatCard extends StatelessWidget {
+class StatCard extends StatefulWidget {
   final String statName;
   final int value;
   final int minValue;
@@ -18,6 +19,33 @@ class StatCard extends StatelessWidget {
     required this.onChanged,
     required this.onRandomize,
   });
+
+  @override
+  State<StatCard> createState() => _StatCardState();
+}
+
+class _StatCardState extends State<StatCard> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.value.toString());
+  }
+
+  @override
+  void didUpdateWidget(StatCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value && _controller.text != widget.value.toString()) {
+      _controller.text = widget.value.toString();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,11 +65,18 @@ class StatCard extends StatelessWidget {
         ),
         child: ListTile(
           leading: Icon(Icons.star, color: AppTheme.medievalGold, size: 24),
-          title: Text(
-            statName,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: AppTheme.medievalDarkBrown,
+          title: Tooltip(
+            message: StatDescriptions.getOrDefault(widget.statName),
+            preferBelow: false,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.help,
+              child: Text(
+                widget.statName,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.medievalDarkBrown,
+                ),
+              ),
             ),
           ),
           trailing: Row(
@@ -59,7 +94,7 @@ class StatCard extends StatelessWidget {
                 ),
                 child: TextField(
                   textAlign: TextAlign.center,
-                  controller: TextEditingController(text: value.toString()),
+                  controller: _controller,
                   keyboardType: TextInputType.number,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
@@ -71,8 +106,8 @@ class StatCard extends StatelessWidget {
                   ),
                   onChanged: (value) {
                     final intValue = int.tryParse(value);
-                    if (intValue != null && intValue >= minValue && intValue <= maxValue) {
-                      onChanged(intValue);
+                    if (intValue != null && intValue >= widget.minValue && intValue <= widget.maxValue) {
+                      widget.onChanged(intValue);
                     }
                   },
                 ),
@@ -92,7 +127,7 @@ class StatCard extends StatelessWidget {
                 ),
                 child: IconButton(
                   icon: const Icon(Icons.casino, size: 20, color: AppTheme.medievalDarkBrown),
-                  onPressed: onRandomize,
+                  onPressed: widget.onRandomize,
                   tooltip: 'Tirer au sort',
                   padding: const EdgeInsets.all(8),
                 ),

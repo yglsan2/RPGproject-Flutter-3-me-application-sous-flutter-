@@ -1,6 +1,10 @@
-# rpg_character_generator_new
+# ManyFaces
 
-A new Flutter project.
+Application de génération de fiches de personnages et PNJ pour jeux de rôle (INS/MV, etc.).
+
+**Logiciel créé par DesertYGL**
+
+Ce logiciel est libre, sous licence **GNU GPL v3**. Voir le fichier [LICENSE](LICENSE) pour les termes complets.
 
 ## Getting Started
 

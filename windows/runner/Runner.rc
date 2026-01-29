@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.rpg" "\0"
-            VALUE "FileDescription", "rpg_character_generator_new" "\0"
+            VALUE "FileDescription", "ManyFaces" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "rpg_character_generator_new" "\0"
+            VALUE "InternalName", "ManyFaces" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.rpg. All rights reserved." "\0"
-            VALUE "OriginalFilename", "rpg_character_generator_new.exe" "\0"
-            VALUE "ProductName", "rpg_character_generator_new" "\0"
+            VALUE "OriginalFilename", "many_faces.exe" "\0"
+            VALUE "ProductName", "ManyFaces" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

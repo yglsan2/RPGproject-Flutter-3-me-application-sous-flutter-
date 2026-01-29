@@ -3,13 +3,14 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../providers/character_provider.dart';
 import '../providers/game_provider.dart';
-import '../models/character.dart';
+import '../models/character.dart' show Character, Power;
 import '../widgets/stat_card.dart';
 import '../widgets/parchment_widget.dart';
 import '../widgets/dice_roller.dart';
 import '../theme/app_theme.dart';
 import '../services/storage_service.dart';
 import '../services/character_generator_service.dart';
+import '../data/game_data.dart';
 
 class CharacterDetailScreen extends StatefulWidget {
   const CharacterDetailScreen({super.key});
@@ -21,22 +22,37 @@ class CharacterDetailScreen extends StatefulWidget {
 class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _motivationController = TextEditingController();
-  bool _isEditing = false;
+  final TextEditingController _fatigueController = TextEditingController();
+  final TextEditingController _powerPointsController = TextEditingController();
+  String? _lastCharacterId;
 
   @override
   void initState() {
     super.initState();
     final character = context.read<CharacterProvider>().currentCharacter;
     if (character != null) {
+      _lastCharacterId = character.id;
       _nameController.text = character.name;
       _motivationController.text = character.motivation;
+      _fatigueController.text = character.fatiguePoints.toString();
+      _powerPointsController.text = character.powerPoints.toString();
     }
+  }
+
+  void _syncControllersFromCharacter(Character character) {
+    _lastCharacterId = character.id;
+    _nameController.text = character.name;
+    _motivationController.text = character.motivation;
+    _fatigueController.text = character.fatiguePoints.toString();
+    _powerPointsController.text = character.powerPoints.toString();
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _motivationController.dispose();
+    _fatigueController.dispose();
+    _powerPointsController.dispose();
     super.dispose();
   }
 
@@ -74,6 +90,8 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
           );
         }
 
+        if (_lastCharacterId != character.id) _syncControllersFromCharacter(character);
+
         return Scaffold(
           appBar: AppBar(
             title: Row(
@@ -89,15 +107,9 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
             ),
             actions: [
               IconButton(
-                icon: Icon(_isEditing ? Icons.save : Icons.edit),
-                onPressed: () {
-                  if (_isEditing) {
-                    _saveCharacter(characterProvider, character);
-                  } else {
-                    setState(() => _isEditing = true);
-                  }
-                },
-                tooltip: _isEditing ? 'Sauvegarder' : 'Modifier',
+                icon: const Icon(Icons.save),
+                onPressed: () => _saveCharacter(characterProvider, character),
+                tooltip: 'Sauvegarder la fiche',
               ),
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert),
@@ -151,19 +163,19 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                _buildHeaderCard(character),
+                _buildHeaderCard(character, characterProvider),
                 const SizedBox(height: 16),
-                _buildBasicInfoCard(character),
+                _buildBasicInfoCard(character, characterProvider),
                 const SizedBox(height: 16),
                 _buildStatsCard(character, characterProvider),
                 const SizedBox(height: 16),
-                _buildTalentsCard(character),
+                _buildTalentsCard(character, characterProvider),
                 const SizedBox(height: 16),
-                _buildPowersCard(character),
+                _buildPowersCard(character, characterProvider),
                 const SizedBox(height: 16),
-                _buildCompetencesCard(character),
+                _buildCompetencesCard(character, characterProvider),
                 const SizedBox(height: 16),
-                _buildEquipmentCard(character),
+                _buildEquipmentCard(character, characterProvider),
                 const SizedBox(height: 16),
                 _buildDiceRollerCard(),
                 const SizedBox(height: 16),
@@ -175,7 +187,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
     );
   }
 
-  Widget _buildHeaderCard(Character character) {
+  Widget _buildHeaderCard(Character character, CharacterProvider characterProvider) {
     return ParchmentWidget(
       child: Column(
         children: [
@@ -192,40 +204,31 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          if (_isEditing)
-            TextField(
-              controller: _nameController,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.medievalDarkBrown,
-              ),
-              textAlign: TextAlign.center,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppTheme.medievalBronze, width: 2),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppTheme.medievalBronze, width: 2),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppTheme.medievalGold, width: 2),
-                ),
-              ),
-            )
-          else
-            Text(
-              character.name,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.medievalDarkBrown,
-              ),
-              textAlign: TextAlign.center,
+          TextField(
+            controller: _nameController,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.medievalDarkBrown,
             ),
+            textAlign: TextAlign.center,
+            decoration: InputDecoration(
+              hintText: 'Nom du personnage',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppTheme.medievalBronze, width: 2),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppTheme.medievalBronze, width: 2),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppTheme.medievalGold, width: 2),
+              ),
+            ),
+            onChanged: (value) => characterProvider.updateCharacter(character.copyWith(name: value)),
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -257,7 +260,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
     );
   }
 
-  Widget _buildBasicInfoCard(Character character) {
+  Widget _buildBasicInfoCard(Character character, CharacterProvider characterProvider) {
     return Card(
       child: Container(
         decoration: BoxDecoration(
@@ -290,8 +293,51 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              _buildInfoRow('Points de Fatigue', '${character.fatiguePoints}'),
-              _buildInfoRow('Points de Pouvoir', '${character.powerPoints}'),
+              Row(
+                children: [
+                  Expanded(child: Text('Points de Fatigue', style: TextStyle(fontWeight: FontWeight.w500, color: AppTheme.medievalDarkBrown))),
+                  SizedBox(
+                    width: 80,
+                    child: TextField(
+                      controller: _fatigueController,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      ),
+                      onChanged: (v) {
+                        final n = int.tryParse(v);
+                        if (n != null && n >= 0) characterProvider.updateCharacter(character.copyWith(fatiguePoints: n));
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(child: Text('Points de Pouvoir', style: TextStyle(fontWeight: FontWeight.w500, color: AppTheme.medievalDarkBrown))),
+                  SizedBox(
+                    width: 80,
+                    child: TextField(
+                      controller: _powerPointsController,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      ),
+                      onChanged: (v) {
+                        final n = int.tryParse(v);
+                        if (n != null && n >= 0) characterProvider.updateCharacter(character.copyWith(powerPoints: n));
+                      },
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 12),
               Text(
                 'Motivation',
@@ -301,46 +347,28 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                     ),
               ),
               const SizedBox(height: 8),
-              if (_isEditing)
-                TextField(
-                  controller: _motivationController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppTheme.medievalBronze, width: 2),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppTheme.medievalBronze, width: 2),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppTheme.medievalGold, width: 2),
-                    ),
+              TextField(
+                controller: _motivationController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'Motivation du personnage',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppTheme.medievalBronze, width: 2),
                   ),
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppTheme.medievalGold.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: AppTheme.medievalGold.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppTheme.medievalBronze, width: 2),
                   ),
-                  child: Text(
-                    character.motivation.isEmpty ? 'Aucune motivation définie' : character.motivation,
-                    style: TextStyle(
-                      fontStyle: character.motivation.isEmpty ? FontStyle.italic : FontStyle.normal,
-                      color: AppTheme.medievalDarkBrown,
-                    ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppTheme.medievalGold, width: 2),
                   ),
                 ),
+                onChanged: (value) => characterProvider.updateCharacter(character.copyWith(motivation: value)),
+              ),
             ],
           ),
         ),
@@ -473,7 +501,9 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
     );
   }
 
-  Widget _buildTalentsCard(Character character) {
+  Widget _buildTalentsCard(Character character, CharacterProvider characterProvider) {
+    final candidates = GameData.getGameSystems().where((g) => g.id == character.gameId).toList();
+    final gameSystem = candidates.isEmpty ? null : candidates.first;
     return Card(
       child: Container(
         decoration: BoxDecoration(
@@ -496,13 +526,37 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                 children: [
                   Icon(Icons.auto_awesome, color: AppTheme.medievalGold, size: 24),
                   const SizedBox(width: 8),
-                  Text(
-                    'Talents',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.medievalDarkBrown,
-                        ),
+                  Expanded(
+                    child: Text(
+                      'Talents',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.medievalDarkBrown,
+                          ),
+                    ),
                   ),
+                  if (gameSystem != null) ...[
+                    IconButton(
+                      icon: const Icon(Icons.casino, size: 20),
+                      onPressed: () {
+                        final newList = CharacterGeneratorService.generateRandomTalents(gameSystem, isNPC: character.isNPC);
+                        characterProvider.updateCharacter(character.copyWith(talents: newList));
+                      },
+                      tooltip: 'Tirer au sort (tous)',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add, size: 20),
+                      onPressed: () {
+                        final name = gameSystem.availableTalents.isNotEmpty
+                            ? CharacterGeneratorService.pickRandomTalent(gameSystem)
+                            : 'Nouveau talent';
+                        characterProvider.updateCharacter(character.copyWith(
+                          talents: [...character.talents, name],
+                        ));
+                      },
+                      tooltip: 'Ajouter (tirage)',
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 16),
@@ -518,9 +572,11 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
-                  children: character.talents.map((talent) {
+                  children: character.talents.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final talent = entry.value;
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -546,6 +602,37 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                               color: AppTheme.medievalDarkBrown,
                             ),
                           ),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            icon: const Icon(Icons.casino, size: 16),
+                            onPressed: gameSystem != null
+                                ? () {
+                                    final newTalent = CharacterGeneratorService.pickRandomTalent(gameSystem);
+                                    final newList = List<String>.from(character.talents)..[index] = newTalent;
+                                    characterProvider.updateCharacter(character.copyWith(talents: newList));
+                                  }
+                                : null,
+                            tooltip: 'Tirer au sort',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.edit, size: 16),
+                            onPressed: () => _showEditTalentDialog(character, characterProvider, index, talent),
+                            tooltip: 'Modifier',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 16),
+                            onPressed: () {
+                              final newList = List<String>.from(character.talents)..removeAt(index);
+                              characterProvider.updateCharacter(character.copyWith(talents: newList));
+                            },
+                            tooltip: 'Supprimer',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                          ),
                         ],
                       ),
                     );
@@ -558,7 +645,38 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
     );
   }
 
-  Widget _buildPowersCard(Character character) {
+  Future<void> _showEditTalentDialog(Character character, CharacterProvider characterProvider, int index, String current) async {
+    final controller = TextEditingController(text: current);
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Modifier le talent'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(labelText: 'Nom du talent'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          FilledButton(
+            onPressed: () {
+              final v = controller.text.trim();
+              if (v.isNotEmpty) Navigator.pop(ctx, true);
+            },
+            child: const Text('Enregistrer'),
+          ),
+        ],
+      ),
+    );
+    if (result == true && controller.text.trim().isNotEmpty) {
+      final newList = List<String>.from(character.talents)..[index] = controller.text.trim();
+      characterProvider.updateCharacter(character.copyWith(talents: newList));
+    }
+  }
+
+  Widget _buildPowersCard(Character character, CharacterProvider characterProvider) {
+    final candidates = GameData.getGameSystems().where((g) => g.id == character.gameId).toList();
+    final gameSystem = candidates.isEmpty ? null : candidates.first;
     return Card(
       child: Container(
         decoration: BoxDecoration(
@@ -581,13 +699,35 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                 children: [
                   Icon(Icons.bolt, color: AppTheme.medievalGold, size: 24),
                   const SizedBox(width: 8),
-                  Text(
-                    'Pouvoirs',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.medievalDarkBrown,
-                        ),
+                  Expanded(
+                    child: Text(
+                      'Pouvoirs',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.medievalDarkBrown,
+                          ),
+                    ),
                   ),
+                  if (gameSystem != null) ...[
+                    IconButton(
+                      icon: const Icon(Icons.casino, size: 20),
+                      onPressed: () {
+                        final newList = CharacterGeneratorService.generateRandomPowers(gameSystem, character.type, isNPC: character.isNPC);
+                        characterProvider.updateCharacter(character.copyWith(powers: newList));
+                      },
+                      tooltip: 'Tirer au sort (tous)',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add, size: 20),
+                      onPressed: () {
+                        final p = CharacterGeneratorService.pickRandomPower(gameSystem, character.type);
+                        characterProvider.updateCharacter(character.copyWith(
+                          powers: [...character.powers, p],
+                        ));
+                      },
+                      tooltip: 'Ajouter (tirage)',
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 16),
@@ -600,7 +740,9 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                   ),
                 )
               else
-                ...character.powers.map((power) {
+                ...character.powers.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final power = entry.value;
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(16),
@@ -649,6 +791,36 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                                 ),
                               ),
                             ),
+                            if (gameSystem != null) ...[
+                              IconButton(
+                                icon: const Icon(Icons.casino, size: 16),
+                                onPressed: () {
+                                  final p = CharacterGeneratorService.pickRandomPower(gameSystem, character.type);
+                                  final newList = List<Power>.from(character.powers)..[index] = p;
+                                  characterProvider.updateCharacter(character.copyWith(powers: newList));
+                                },
+                                tooltip: 'Tirer au sort',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.edit, size: 16),
+                                onPressed: () => _showEditPowerDialog(character, characterProvider, index, power),
+                                tooltip: 'Modifier',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close, size: 16),
+                                onPressed: () {
+                                  final newList = List<Power>.from(character.powers)..removeAt(index);
+                                  characterProvider.updateCharacter(character.copyWith(powers: newList));
+                                },
+                                tooltip: 'Supprimer',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                              ),
+                            ],
                           ],
                         ),
                         if (power.description.isNotEmpty) ...[
@@ -673,7 +845,68 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
     );
   }
 
-  Widget _buildCompetencesCard(Character character) {
+  Future<void> _showEditPowerDialog(Character character, CharacterProvider characterProvider, int index, Power power) async {
+    final nameCtrl = TextEditingController(text: power.name);
+    final costCtrl = TextEditingController(text: power.costPP.toString());
+    final descCtrl = TextEditingController(text: power.description);
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Modifier le pouvoir'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: 'Nom'),
+                autofocus: true,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: costCtrl,
+                decoration: const InputDecoration(labelText: 'Coût (PP)'),
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: descCtrl,
+                decoration: const InputDecoration(labelText: 'Description'),
+                maxLines: 2,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          FilledButton(
+            onPressed: () {
+              final name = nameCtrl.text.trim();
+              final cost = int.tryParse(costCtrl.text);
+              if (name.isNotEmpty && cost != null && cost >= 0) Navigator.pop(ctx, true);
+            },
+            child: const Text('Enregistrer'),
+          ),
+        ],
+      ),
+    );
+    if (result == true &&
+        nameCtrl.text.trim().isNotEmpty &&
+        int.tryParse(costCtrl.text) != null &&
+        (int.tryParse(costCtrl.text) ?? 0) >= 0) {
+      final p = Power(
+        name: nameCtrl.text.trim(),
+        costPP: int.tryParse(costCtrl.text) ?? power.costPP,
+        description: descCtrl.text.trim(),
+      );
+      final newList = List<Power>.from(character.powers)..[index] = p;
+      characterProvider.updateCharacter(character.copyWith(powers: newList));
+    }
+  }
+
+  Widget _buildCompetencesCard(Character character, CharacterProvider characterProvider) {
+    final candidates = GameData.getGameSystems().where((g) => g.id == character.gameId).toList();
+    final gameSystem = candidates.isEmpty ? null : candidates.first;
     return Card(
       child: Container(
         decoration: BoxDecoration(
@@ -696,13 +929,24 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                 children: [
                   Icon(Icons.school, color: AppTheme.medievalGold, size: 24),
                   const SizedBox(width: 8),
-                  Text(
-                    'Compétences',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.medievalDarkBrown,
-                        ),
+                  Expanded(
+                    child: Text(
+                      'Compétences',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.medievalDarkBrown,
+                          ),
+                    ),
                   ),
+                  if (gameSystem != null)
+                    IconButton(
+                      icon: const Icon(Icons.casino, size: 20),
+                      onPressed: () {
+                        final newMap = CharacterGeneratorService.generateRandomCompetences(gameSystem, isNPC: character.isNPC);
+                        characterProvider.updateCharacter(character.copyWith(competences: newMap));
+                      },
+                      tooltip: 'Tirer au sort (toutes)',
+                    ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -716,6 +960,8 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                 )
               else
                 ...character.competences.entries.map((entry) {
+                  final compName = entry.key;
+                  final level = entry.value;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Row(
@@ -723,7 +969,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            entry.key,
+                            compName,
                             style: const TextStyle(
                               fontWeight: FontWeight.w500,
                               color: AppTheme.medievalDarkBrown,
@@ -746,13 +992,43 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                             ),
                           ),
                           child: Text(
-                            'Niveau ${entry.value}',
+                            'Niveau $level',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: AppTheme.medievalDarkBrown,
                             ),
                           ),
                         ),
+                        if (gameSystem != null) ...[
+                          IconButton(
+                            icon: const Icon(Icons.casino, size: 16),
+                            onPressed: () {
+                              final newEntry = CharacterGeneratorService.pickRandomCompetence(gameSystem, isNPC: character.isNPC);
+                              final newMap = Map<String, int>.from(character.competences)..remove(compName)..[newEntry.key] = newEntry.value;
+                              characterProvider.updateCharacter(character.copyWith(competences: newMap));
+                            },
+                            tooltip: 'Tirer au sort',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.edit, size: 16),
+                            onPressed: () => _showEditCompetenceDialog(character, characterProvider, compName, level),
+                            tooltip: 'Modifier',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 16),
+                            onPressed: () {
+                              final newMap = Map<String, int>.from(character.competences)..remove(compName);
+                              characterProvider.updateCharacter(character.copyWith(competences: newMap));
+                            },
+                            tooltip: 'Supprimer',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                          ),
+                        ],
                       ],
                     ),
                   );
@@ -764,7 +1040,54 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
     );
   }
 
-  Widget _buildEquipmentCard(Character character) {
+  Future<void> _showEditCompetenceDialog(Character character, CharacterProvider characterProvider, String oldName, int oldLevel) async {
+    final nameCtrl = TextEditingController(text: oldName);
+    final levelCtrl = TextEditingController(text: oldLevel.toString());
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Modifier la compétence'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameCtrl,
+              decoration: const InputDecoration(labelText: 'Nom'),
+              autofocus: true,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: levelCtrl,
+              decoration: const InputDecoration(labelText: 'Niveau'),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          FilledButton(
+            onPressed: () {
+              final name = nameCtrl.text.trim();
+              final lvl = int.tryParse(levelCtrl.text);
+              if (name.isNotEmpty && lvl != null && lvl >= 1) Navigator.pop(ctx, true);
+            },
+            child: const Text('Enregistrer'),
+          ),
+        ],
+      ),
+    );
+    if (result == true &&
+        nameCtrl.text.trim().isNotEmpty &&
+        int.tryParse(levelCtrl.text) != null &&
+        (int.tryParse(levelCtrl.text) ?? 0) >= 1) {
+      final newMap = Map<String, int>.from(character.competences)..remove(oldName)..[nameCtrl.text.trim()] = int.parse(levelCtrl.text);
+      characterProvider.updateCharacter(character.copyWith(competences: newMap));
+    }
+  }
+
+  Widget _buildEquipmentCard(Character character, CharacterProvider characterProvider) {
+    final candidates = GameData.getGameSystems().where((g) => g.id == character.gameId).toList();
+    final gameSystem = candidates.isEmpty ? null : candidates.first;
     return Card(
       child: Container(
         decoration: BoxDecoration(
@@ -787,13 +1110,35 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                 children: [
                   Icon(Icons.backpack, color: AppTheme.medievalGold, size: 24),
                   const SizedBox(width: 8),
-                  Text(
-                    'Équipement',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.medievalDarkBrown,
-                        ),
+                  Expanded(
+                    child: Text(
+                      'Équipement',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.medievalDarkBrown,
+                          ),
+                    ),
                   ),
+                  if (gameSystem != null) ...[
+                    IconButton(
+                      icon: const Icon(Icons.casino, size: 20),
+                      onPressed: () {
+                        final newList = CharacterGeneratorService.generateRandomEquipmentList(character.type, character.gameId);
+                        characterProvider.updateCharacter(character.copyWith(equipment: newList));
+                      },
+                      tooltip: 'Tirer au sort (tous)',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add, size: 20),
+                      onPressed: () {
+                        final item = CharacterGeneratorService.pickRandomEquipment(character.type, character.gameId);
+                        characterProvider.updateCharacter(character.copyWith(
+                          equipment: [...character.equipment, item],
+                        ));
+                      },
+                      tooltip: 'Ajouter (tirage)',
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 16),
@@ -809,9 +1154,11 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
-                  children: character.equipment.map((item) {
+                  children: character.equipment.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final item = entry.value;
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -837,6 +1184,37 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                               color: AppTheme.medievalDarkBrown,
                             ),
                           ),
+                          if (gameSystem != null) ...[
+                            const SizedBox(width: 4),
+                            IconButton(
+                              icon: const Icon(Icons.casino, size: 16),
+                              onPressed: () {
+                                final newItem = CharacterGeneratorService.pickRandomEquipment(character.type, character.gameId);
+                                final newList = List<String>.from(character.equipment)..[index] = newItem;
+                                characterProvider.updateCharacter(character.copyWith(equipment: newList));
+                              },
+                              tooltip: 'Tirer au sort',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit, size: 16),
+                              onPressed: () => _showEditEquipmentDialog(character, characterProvider, index, item),
+                              tooltip: 'Modifier',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, size: 16),
+                              onPressed: () {
+                                final newList = List<String>.from(character.equipment)..removeAt(index);
+                                characterProvider.updateCharacter(character.copyWith(equipment: newList));
+                              },
+                              tooltip: 'Supprimer',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                            ),
+                          ],
                         ],
                       ),
                     );
@@ -847,6 +1225,34 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _showEditEquipmentDialog(Character character, CharacterProvider characterProvider, int index, String current) async {
+    final controller = TextEditingController(text: current);
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Modifier l\'équipement'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(labelText: 'Objet'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          FilledButton(
+            onPressed: () {
+              if (controller.text.trim().isNotEmpty) Navigator.pop(ctx, true);
+            },
+            child: const Text('Enregistrer'),
+          ),
+        ],
+      ),
+    );
+    if (result == true && controller.text.trim().isNotEmpty) {
+      final newList = List<String>.from(character.equipment)..[index] = controller.text.trim();
+      characterProvider.updateCharacter(character.copyWith(equipment: newList));
+    }
   }
 
   Widget _buildDiceRollerCard() {
@@ -894,11 +1300,12 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
     final updated = character.copyWith(
       name: _nameController.text,
       motivation: _motivationController.text,
+      fatiguePoints: int.tryParse(_fatigueController.text) ?? character.fatiguePoints,
+      powerPoints: int.tryParse(_powerPointsController.text) ?? character.powerPoints,
     );
     characterProvider.updateCharacter(updated);
     characterProvider.saveCharacter(updated);
     StorageService.saveCharacter(updated);
-    setState(() => _isEditing = false);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Personnage sauvegardé'),

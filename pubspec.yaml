@@ -1,7 +1,9 @@
-name: rpg_character_generator_new
-description: Générateur de personnages et PNJ pour jeux de rôle INS/MV
+name: many_faces
+description: ManyFaces – Générateur de fiches de personnages et PNJ pour jeux de rôle (INS/MV, etc.)
 publish_to: 'none'
 version: 1.0.0+1
+author: DesertYGL
+license: GPL-3.0
 
 environment:
   sdk: '>=3.4.0 <4.0.0'

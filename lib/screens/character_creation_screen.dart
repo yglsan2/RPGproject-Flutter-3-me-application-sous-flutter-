@@ -45,6 +45,13 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
           ],
         ),
         actions: [
+          TextButton.icon(
+            onPressed: _generateFullRandomCharacter,
+            icon: const Icon(Icons.casino, color: AppTheme.medievalGold, size: 22),
+            label: const Text('Tout Aléatoire'),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.medievalGold),
+          ),
+          const SizedBox(width: 8),
           Container(
             margin: const EdgeInsets.only(right: 8),
             decoration: BoxDecoration(
@@ -95,86 +102,123 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
               children: [
                 _buildBreadcrumb(game, gameProvider),
                 Expanded(
-                  child: Stepper(
-                    currentStep: _currentStep,
-                    onStepContinue: () {
-                      if (_currentStep < _maxStep) setState(() => _currentStep++);
-                    },
-                    onStepCancel: () {
-                      if (_currentStep > 0) setState(() => _currentStep--);
-                    },
-                    controlsBuilder: (context, details) {
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 16),
-                        child: Row(
-                          children: [
-                            ElevatedButton(
-                              onPressed: details.onStepContinue,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.medievalGold,
-                                foregroundColor: AppTheme.medievalDarkBrown,
-                              ),
-                              child: Text(_currentStep == _maxStep ? 'Récapitulatif' : 'Suivant'),
-                            ),
-                            if (_currentStep > 0) ...[
-                              const SizedBox(width: 12),
-                              TextButton(
-                                onPressed: details.onStepCancel,
-                                child: const Text('Précédent'),
+                  child: SingleChildScrollView(
+                    child: Stepper(
+                      currentStep: _currentStep,
+                      onStepTapped: (index) {
+                        if (index < _currentStep) {
+                          setState(() => _currentStep = index);
+                        }
+                      },
+                      onStepContinue: () {
+                        if (!_validateCurrentStep(game, gameProvider)) return;
+                        if (_currentStep < _maxStep) {
+                          setState(() {
+                            final nextStep = _currentStep + 1;
+                            if (nextStep == 2 && _selectedSuperior != null && _selectedCharacterType != null) {
+                              final editionId = gameProvider.currentEditionId ?? (game.editions.isEmpty ? '' : game.editions.first.id);
+                              final edition = game.getEdition(editionId);
+                              final archMap = edition?.archetypes[_selectedCharacterType];
+                              if (archMap != null && archMap.containsKey(_selectedSuperior)) {
+                                _selectedArchetype = _selectedSuperior;
+                                gameProvider.saveArchetype(_selectedCharacterType!, _selectedSuperior!);
+                              }
+                            }
+                            _currentStep = nextStep;
+                          });
+                        }
+                      },
+                      onStepCancel: () {
+                        if (_currentStep > 0) setState(() => _currentStep--);
+                      },
+                      controlsBuilder: (context, details) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: Row(
+                            children: [
+                              if (_currentStep > 0) ...[
+                                OutlinedButton.icon(
+                                  onPressed: details.onStepCancel,
+                                  icon: const Icon(Icons.arrow_back, size: 18),
+                                  label: const Text('Précédent'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppTheme.medievalDarkBrown,
+                                    side: BorderSide(color: AppTheme.medievalGold),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                              ],
+                              ElevatedButton.icon(
+                                onPressed: details.onStepContinue,
+                                icon: Icon(_currentStep == _maxStep ? Icons.check_circle : Icons.arrow_forward, size: 18),
+                                label: Text(_currentStep == _maxStep ? 'Récapitulatif' : 'Suivant'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.medievalGold,
+                                  foregroundColor: AppTheme.medievalDarkBrown,
+                                ),
                               ),
                             ],
-                          ],
+                          ),
+                        );
+                      },
+                      steps: [
+                        Step(
+                          title: const Text('Type & options'),
+                          subtitle: _selectedCharacterType != null ? Text(_selectedCharacterType!) : null,
+                          isActive: _currentStep >= 0,
+                          state: _currentStep > 0 ? StepState.complete : StepState.indexed,
+                          content: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildCharacterTypeSelector(game),
+                              const SizedBox(height: 16),
+                              _buildNPCSelector(),
+                            ],
+                          ),
                         ),
-                      );
-                    },
-                    steps: [
-                      Step(
-                        title: const Text('Type & options'),
-                        subtitle: _selectedCharacterType != null ? Text(_selectedCharacterType!) : null,
-                        isActive: _currentStep >= 0,
-                        state: _currentStep > 0 ? StepState.complete : StepState.indexed,
-                        content: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _buildCharacterTypeSelector(game),
-                            const SizedBox(height: 16),
-                            _buildNPCSelector(),
-                          ],
+                        Step(
+                          title: const Text('Supérieur'),
+                          subtitle: _selectedSuperior != null ? Text(_selectedSuperior!, overflow: TextOverflow.ellipsis) : null,
+                          isActive: _currentStep >= 1,
+                          state: _currentStep > 1 ? StepState.complete : StepState.indexed,
+                          content: ConstrainedBox(
+                            constraints: const BoxConstraints(maxHeight: 400),
+                            child: SingleChildScrollView(child: _buildSuperiorSelector(game)),
+                          ),
                         ),
-                      ),
-                      Step(
-                        title: const Text('Supérieur'),
-                        subtitle: _selectedSuperior != null ? Text(_selectedSuperior!, overflow: TextOverflow.ellipsis) : null,
-                        isActive: _currentStep >= 1,
-                        state: _currentStep > 1 ? StepState.complete : StepState.indexed,
-                        content: _buildSuperiorSelector(game),
-                      ),
-                      Step(
-                        title: const Text('Archétype'),
-                        subtitle: _selectedArchetype != null ? Text(_selectedArchetype!, overflow: TextOverflow.ellipsis) : null,
-                        isActive: _currentStep >= 2,
-                        state: _currentStep > 2 ? StepState.complete : StepState.indexed,
-                        content: _selectedCharacterType == null
-                            ? const Padding(padding: EdgeInsets.all(16), child: Text('Choisissez d\'abord un type.'))
-                            : Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  ArchetypeSelector(
-                                    characterType: _selectedCharacterType!,
-                                    selectedArchetype: _selectedArchetype,
-                                    onArchetypeChanged: (archetype) {
-                                      setState(() {
-                                        _selectedArchetype = archetype;
-                                        gameProvider.saveArchetype(_selectedCharacterType!, archetype ?? '');
-                                      });
-                                    },
-                                    onUseArchetypeChanged: (value) => setState(() => _useArchetype = value),
-                                    useArchetype: _useArchetype,
-                                  ),
-                                ],
-                              ),
-                      ),
-                      Step(
+                        Step(
+                          title: const Text('Archétype'),
+                          subtitle: _selectedArchetype != null ? Text(_selectedArchetype!, overflow: TextOverflow.ellipsis) : null,
+                          isActive: _currentStep >= 2,
+                          state: _currentStep > 2 ? StepState.complete : StepState.indexed,
+                          content: ConstrainedBox(
+                            constraints: const BoxConstraints(maxHeight: 400),
+                            child: SingleChildScrollView(
+                              child: _selectedCharacterType == null
+                                  ? const Padding(padding: EdgeInsets.all(16), child: Text('Choisissez d\'abord un type.'))
+                                  : Column(
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        ArchetypeSelector(
+                                          characterType: _selectedCharacterType!,
+                                          selectedArchetype: _selectedArchetype,
+                                          onArchetypeChanged: (archetype) {
+                                            setState(() {
+                                              _selectedArchetype = archetype;
+                                              gameProvider.saveArchetype(_selectedCharacterType!, archetype ?? '');
+                                            });
+                                          },
+                                          onUseArchetypeChanged: (value) => setState(() => _useArchetype = value),
+                                          useArchetype: _useArchetype,
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          ),
+                        ),
+                        Step(
                         title: const Text('Nom'),
                         subtitle: Text(_nameOrigin != 'Fantasy' || _nameStyle != 'Classique' ? '$_nameOrigin · $_nameStyle' : ''),
                         isActive: _currentStep >= 3,
@@ -190,9 +234,66 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                     ],
                   ),
                 ),
+              ),
+                _buildBottomNavBar(game, gameProvider),
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+
+  /// Barre de navigation fixe en bas : Précédent / Suivant toujours visibles (évite le blocage à l'étape Archétype).
+  Widget _buildBottomNavBar(GameSystem game, GameProvider gameProvider) {
+    return Material(
+      elevation: 8,
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              if (_currentStep > 0)
+                OutlinedButton.icon(
+                  onPressed: () => setState(() => _currentStep--),
+                  icon: const Icon(Icons.arrow_back, size: 18),
+                  label: const Text('Précédent'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.medievalDarkBrown,
+                    side: BorderSide(color: AppTheme.medievalGold),
+                  ),
+                ),
+              if (_currentStep > 0) const SizedBox(width: 12),
+              Expanded(child: const SizedBox()),
+              ElevatedButton.icon(
+                onPressed: () {
+                  if (!_validateCurrentStep(game, gameProvider)) return;
+                  if (_currentStep < _maxStep) {
+                    setState(() {
+                      final nextStep = _currentStep + 1;
+                      if (nextStep == 2 && _selectedSuperior != null && _selectedCharacterType != null) {
+                        final editionId = gameProvider.currentEditionId ?? (game.editions.isEmpty ? '' : game.editions.first.id);
+                        final edition = game.getEdition(editionId);
+                        final archMap = edition?.archetypes[_selectedCharacterType];
+                        if (archMap != null && archMap.containsKey(_selectedSuperior)) {
+                          _selectedArchetype = _selectedSuperior;
+                          gameProvider.saveArchetype(_selectedCharacterType!, _selectedSuperior!);
+                        }
+                      }
+                      _currentStep = nextStep;
+                    });
+                  }
+                },
+                icon: Icon(_currentStep == _maxStep ? Icons.check_circle : Icons.arrow_forward, size: 18),
+                label: Text(_currentStep == _maxStep ? 'Récapitulatif' : 'Suivant'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.medievalGold,
+                  foregroundColor: AppTheme.medievalDarkBrown,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -272,6 +373,33 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                   );
                 }).toList(),
               ),
+              if (_selectedCharacterType != null && game.characterTypeDescriptions[_selectedCharacterType] != null) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.medievalGold.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.medievalGold.withValues(alpha: 0.25)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.info_outline, color: AppTheme.medievalGold, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          game.characterTypeDescriptions[_selectedCharacterType]!,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: AppTheme.medievalDarkBrown,
+                                fontStyle: FontStyle.italic,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -706,7 +834,114 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
     );
   }
 
-  void _generateCharacter() {
+  /// Crée un personnage entièrement aléatoire (type, supérieur, archétype, nom, stats, talents, pouvoirs…) puis ouvre la fiche.
+  Future<void> _generateFullRandomCharacter() async {
+    final gameProvider = context.read<GameProvider>();
+    final characterProvider = context.read<CharacterProvider>();
+    final game = gameProvider.currentGame;
+    if (game == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sélectionnez un système de jeu')));
+      return;
+    }
+    final editionId = gameProvider.currentEditionId ?? (game.editions.isEmpty ? '' : game.editions.first.id);
+    final edition = game.getEdition(editionId);
+    if (edition == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Édition non trouvée')));
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.casino, color: AppTheme.medievalGold),
+            SizedBox(width: 8),
+            Text('Tout Aléatoire'),
+          ],
+        ),
+        content: const Text(
+          'Créer un personnage entièrement aléatoire (type, supérieur, archétype, nom, caractéristiques, talents, pouvoirs…) ? '
+          'Vous pourrez tout modifier sur la fiche ensuite.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          FilledButton.icon(
+            onPressed: () => Navigator.pop(ctx, true),
+            icon: const Icon(Icons.casino, size: 20),
+            label: const Text('Générer'),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.medievalGold, foregroundColor: AppTheme.medievalDarkBrown),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final types = game.characterTypes;
+    final characterType = types[_random.nextInt(types.length)];
+    List<String>? superiorList = game.superiors[characterType];
+    String? superiorOverride;
+    if (superiorList != null && superiorList.isNotEmpty) {
+      superiorOverride = superiorList[_random.nextInt(superiorList.length)];
+    }
+    final archMap = edition.archetypes[characterType];
+    String? archetypeName;
+    bool useArchetype = true;
+    if (archMap != null && archMap.isNotEmpty) {
+      final names = archMap.keys.toList();
+      archetypeName = names[_random.nextInt(names.length)];
+    } else {
+      useArchetype = false;
+    }
+    const origins = ['Fantasy', 'Médiéval', 'Moderne', 'Antique'];
+    const styles = ['Classique', 'Épique', 'Court'];
+    final nameOrigin = origins[_random.nextInt(origins.length)];
+    final nameStyle = styles[_random.nextInt(styles.length)];
+    try {
+      final character = CharacterGeneratorService.generateCharacter(
+        gameSystem: game,
+        editionId: editionId,
+        characterType: characterType,
+        archetypeName: archetypeName,
+        isNPC: _isNPC,
+        useArchetype: useArchetype,
+        npcDiminished: _npcDiminished,
+        superiorOverride: superiorOverride,
+      );
+      character.name = NameGeneratorService.generate(origin: nameOrigin, style: nameStyle);
+      characterProvider.setCurrentCharacter(character);
+      if (!mounted) return;
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CharacterDetailScreen()));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Personnage aléatoire créé — modifiez la fiche si besoin.')));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+    }
+  }
+
+  bool _validateCurrentStep(GameSystem game, GameProvider gameProvider) {
+    switch (_currentStep) {
+      case 0:
+        if (_selectedCharacterType == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Choisissez un type de personnage avant de continuer.')),
+          );
+          return false;
+        }
+        return true;
+      case 1: {
+        final superiors = game.superiors[_selectedCharacterType];
+        if (superiors != null && superiors.isNotEmpty && (_selectedSuperior == null || _selectedSuperior!.isEmpty)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Choisissez un supérieur (archange ou prince) avant de continuer.')),
+          );
+          return false;
+        }
+        return true;
+      }
+      default:
+        return true;
+    }
+  }
+
+  Future<void> _generateCharacter() async {
     developer.log(('🎲 [CHAR_CREATION] Début de génération de personnage').toString());
     final gameProvider = context.read<GameProvider>();
     final characterProvider = context.read<CharacterProvider>();
@@ -717,6 +952,62 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Veuillez sélectionner un type de personnage')));
       return;
     }
+
+    final editionName = game.getEdition(gameProvider.currentEditionId ?? '')?.name ?? '';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: AppTheme.medievalGold),
+            SizedBox(width: 8),
+            Text('Créer ce personnage ?'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Vous êtes sur le point de forger le personnage avec les choix suivants :',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 12),
+              _buildInfoRow('Jeu', game.name),
+              _buildInfoRow('Édition', editionName),
+              _buildInfoRow('Type', _selectedCharacterType ?? '—'),
+              _buildInfoRow('Supérieur', _selectedSuperior ?? '—'),
+              _buildInfoRow('Archétype', _useArchetype ? (_selectedArchetype ?? 'Aléatoire') : 'Non'),
+              _buildInfoRow('PNJ', _isNPC ? (_npcDiminished ? 'Oui (amoindri)' : 'Oui (pleine puissance)') : 'Non'),
+              _buildInfoRow('Nom', '$_nameOrigin · $_nameStyle'),
+              const SizedBox(height: 8),
+              Text(
+                'Vous pourrez modifier tous les détails sur la fiche après création.',
+                style: Theme.of(ctx).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.pop(ctx, true),
+            icon: const Icon(Icons.check_circle, size: 20),
+            label: const Text('Créer le personnage'),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppTheme.medievalGold,
+              foregroundColor: AppTheme.medievalDarkBrown,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
 
     final editionId = gameProvider.currentEditionId ?? game.editions.first.id;
     final archetypeName = _useArchetype ? _selectedArchetype : null;
@@ -746,10 +1037,13 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
       characterProvider.setCurrentCharacter(character);
       developer.log(('✅ [CHAR_CREATION] Personnage créé avec succès').toString());
 
+      if (!mounted) return;
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CharacterDetailScreen()));
     } catch (e) {
       developer.log(('❌ [CHAR_CREATION] Erreur lors de la génération: $e').toString());
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+      }
     }
   }
 }

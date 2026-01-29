@@ -7,6 +7,7 @@ import '../models/game_system.dart';
 import 'character_creation_screen.dart';
 import 'npc_creation_screen.dart';
 import '../theme/app_theme.dart';
+import '../utils/stat_descriptions.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -30,6 +31,18 @@ class HomeScreen extends StatelessWidget {
         ),
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline, color: AppTheme.medievalGold),
+            tooltip: 'À propos',
+            onPressed: () {
+              showAboutDialog(
+                context: context,
+                applicationName: 'ManyFaces',
+                applicationVersion: '1.0.0',
+                applicationLegalese: 'Logiciel créé par DesertYGL.\n\nLibre, sous licence GNU GPL v3.',
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.people, color: AppTheme.medievalGold),
             tooltip: 'Créer un PNJ',
@@ -173,6 +186,24 @@ class HomeScreen extends StatelessWidget {
               if (game != null) provider.setCurrentGame(game);
             },
           ),
+          if (provider.currentGame != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.medievalGold.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.medievalGold.withValues(alpha: 0.25)),
+              ),
+              child: Text(
+                provider.currentGame!.description,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppTheme.medievalDarkBrown,
+                      fontStyle: FontStyle.italic,
+                    ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -291,7 +322,7 @@ class HomeScreen extends StatelessWidget {
                   }
                 },
               ),
-              if (provider.currentEditionId != null)
+              if (provider.currentEditionId != null) ...[
                 Container(
                   margin: const EdgeInsets.only(top: 16),
                   padding: const EdgeInsets.all(12),
@@ -303,13 +334,33 @@ class HomeScreen extends StatelessWidget {
                       width: 1,
                     ),
                   ),
-                  child: Text(
-                    game.getEdition(provider.currentEditionId!)?.description ?? '',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontStyle: FontStyle.italic,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        game.getEdition(provider.currentEditionId!)?.description ?? '',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontStyle: FontStyle.italic,
+                              color: AppTheme.medievalDarkBrown,
+                            ),
+                      ),
+                      if (game.getEdition(provider.currentEditionId!)?.changesFromPrevious != null &&
+                          game.getEdition(provider.currentEditionId!)!.changesFromPrevious!.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        const Divider(height: 1),
+                        const SizedBox(height: 8),
+                        Text(
+                          game.getEdition(provider.currentEditionId!)!.changesFromPrevious!,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppTheme.medievalBronze,
+                                fontStyle: FontStyle.italic,
+                              ),
                         ),
+                      ],
+                    ],
                   ),
                 ),
+              ],
             ],
           ),
         ),
@@ -358,34 +409,41 @@ class HomeScreen extends StatelessWidget {
                 spacing: 10,
                 runSpacing: 10,
                 children: edition.statNames.map((stat) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppTheme.medievalGold.withValues(alpha: 0.3),
-                          AppTheme.medievalBronze.withValues(alpha: 0.2),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AppTheme.medievalGold.withValues(alpha: 0.5),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.star, color: AppTheme.medievalGold, size: 18),
-                        const SizedBox(width: 6),
-                        Text(
-                          stat,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.medievalDarkBrown,
+                  return Tooltip(
+                    message: StatDescriptions.getOrDefault(stat),
+                    preferBelow: false,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.help,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppTheme.medievalGold.withValues(alpha: 0.3),
+                              AppTheme.medievalBronze.withValues(alpha: 0.2),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppTheme.medievalGold.withValues(alpha: 0.5),
+                            width: 1.5,
                           ),
                         ),
-                      ],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.star, color: AppTheme.medievalGold, size: 18),
+                            const SizedBox(width: 6),
+                            Text(
+                              stat,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.medievalDarkBrown,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   );
                 }).toList(),

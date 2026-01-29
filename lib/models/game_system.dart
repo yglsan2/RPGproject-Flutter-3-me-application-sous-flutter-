@@ -5,6 +5,8 @@ class GameSystem {
   final String name;
   final String description;
   final List<String> characterTypes;
+  /// Description courte par type de personnage (ex. "Ange" -> "Être céleste au service du Ciel…").
+  final Map<String, String> characterTypeDescriptions;
   final Map<String, List<String>> superiors;
   final List<String> availableTalents;
   final Map<String, List<PowerTemplate>> powers;
@@ -13,6 +15,10 @@ class GameSystem {
   final int npcPoints;
   final int minStatValue;
   final int maxStatValue;
+  /// Nombre minimal de dés pour un jet (ex. INS/MV : 1).
+  final int minRollDice;
+  /// Nombre maximal de dés pour un jet (ex. INS/MV : 3).
+  final int maxRollDice;
   final List<GameEdition> editions;
 
   GameSystem({
@@ -20,6 +26,7 @@ class GameSystem {
     required this.name,
     required this.description,
     required this.characterTypes,
+    this.characterTypeDescriptions = const {},
     required this.superiors,
     required this.availableTalents,
     required this.powers,
@@ -28,6 +35,8 @@ class GameSystem {
     required this.npcPoints,
     this.minStatValue = 2,
     this.maxStatValue = 5,
+    this.minRollDice = 1,
+    this.maxRollDice = 3,
     required this.editions,
   });
 

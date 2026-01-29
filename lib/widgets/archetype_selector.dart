@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../providers/game_provider.dart';
 import 'package:provider/provider.dart';
@@ -26,11 +27,30 @@ class ArchetypeSelector extends StatelessWidget {
         final game = gameProvider.currentGame;
         if (game == null) return const SizedBox();
 
-        final edition = game.getEdition(gameProvider.currentEditionId ?? '');
+        final editionId = gameProvider.currentEditionId ?? (game.editions.isEmpty ? '' : game.editions.first.id);
+        final edition = game.getEdition(editionId);
         if (edition == null) return const SizedBox();
 
         final archetypes = edition.archetypes[characterType];
-        if (archetypes == null || archetypes.isEmpty) return const SizedBox();
+        if (archetypes == null || archetypes.isEmpty) {
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: AppTheme.medievalGold, size: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Aucun archétype pour ce type. La génération sera aléatoire.',
+                      style: TextStyle(color: AppTheme.medievalDarkBrown, fontStyle: FontStyle.italic),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
 
         return Card(
           child: Container(
@@ -72,9 +92,13 @@ class ArchetypeSelector extends StatelessWidget {
                   ),
                   if (useArchetype) ...[
                     const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      initialValue: selectedArchetype,
-                      decoration: InputDecoration(
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: selectedArchetype,
+                            decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
                         labelText: 'Archétype',
@@ -140,7 +164,22 @@ class ArchetypeSelector extends StatelessWidget {
                           );
                         }),
                       ],
-                      onChanged: onArchetypeChanged,
+                            onChanged: onArchetypeChanged,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            final list = archetypes.keys.toList();
+                            if (list.isNotEmpty) {
+                              onArchetypeChanged(list[Random().nextInt(list.length)]);
+                            }
+                          },
+                          icon: const Icon(Icons.casino, size: 18),
+                          label: const Text('Tirage'),
+                          style: OutlinedButton.styleFrom(foregroundColor: AppTheme.medievalGold),
+                        ),
+                      ],
                     ),
                   ],
                 ],

@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import '../models/character.dart';
 import '../models/game_system.dart';
 import '../models/game_edition.dart';
+import '../utils/roll_d6.dart';
 import 'npc_generator_service.dart';
 
 class CharacterGeneratorService {
@@ -333,11 +334,21 @@ class CharacterGeneratorService {
     }
   }
 
+  /// Pour INS/MV : noms d'éditions v4-v6 (Rêve, Empathie, Intuition) → clé archétype v1 (Intelligence).
+  static const Map<String, String> _insMvEditionStatToArchetype = {
+    'Rêve': 'Intelligence',
+    'Empathie': 'Intelligence',
+    'Intuition': 'Intelligence',
+  };
+
   static Map<String, int> _generateStatsFromArchetype(Archetype archetype, int totalPoints, GameEdition edition, GameSystem gameSystem) {
     developer.log(('🎯 [CHAR_GEN] Génération depuis archétype: ${archetype.name}').toString());
     final stats = <String, int>{};
     for (final statName in edition.statNames) {
-      stats[statName] = archetype.stats[statName] ?? 3;
+      final archetypeKey = (gameSystem.id == 'ins-mv' && _insMvEditionStatToArchetype.containsKey(statName))
+          ? _insMvEditionStatToArchetype[statName]!
+          : statName;
+      stats[statName] = archetype.stats[archetypeKey] ?? edition.defaultStats[statName] ?? 3;
     }
 
     final currentTotal = stats.values.reduce((a, b) => a + b);
@@ -395,8 +406,14 @@ class CharacterGeneratorService {
     }
     
     final totalWeight = weights.values.reduce((a, b) => a + b);
-    var randomValue = _random.nextDouble() * totalWeight;
-    
+    double roll;
+    try {
+      roll = Random.secure().nextDouble();
+    } catch (_) {
+      roll = Random(DateTime.now().microsecondsSinceEpoch).nextDouble();
+    }
+    var randomValue = roll * totalWeight;
+
     for (final entry in weights.entries) {
       randomValue -= entry.value;
       if (randomValue <= 0) {
@@ -436,7 +453,6 @@ class CharacterGeneratorService {
   static Map<String, int> _generateCompetences(List<String> competences, {bool isNPC = false}) {
     // PNJ : compétences à 1-2, Joueur : compétences à 1-3
     if (isNPC) {
-      // Pour les PNJ, seulement quelques compétences à niveau basique
       final selectedCompetences = competences.take(_random.nextInt(competences.length ~/ 2) + competences.length ~/ 3).toList();
       return {for (final comp in selectedCompetences) comp: _random.nextInt(2) + 1};
     } else {
@@ -455,5 +471,60 @@ class CharacterGeneratorService {
       equipment.add('Armure légère');
     }
     return equipment;
+  }
+
+  // ——— API publique pour tirages depuis la fiche (modifier / retirer au sort à volonté) ———
+
+  static List<String> generateRandomTalents(GameSystem gameSystem, {bool isNPC = false}) {
+    return _generateRandomTalents(gameSystem.availableTalents, isNPC: isNPC);
+  }
+
+  static List<Power> generateRandomPowers(GameSystem gameSystem, String characterType, {bool isNPC = false}) {
+    final templates = gameSystem.powers[characterType] ?? <PowerTemplate>[];
+    return _generateRandomPowers(templates, isNPC: isNPC);
+  }
+
+  static Map<String, int> generateRandomCompetences(GameSystem gameSystem, {bool isNPC = false}) {
+    return _generateCompetences(gameSystem.competences, isNPC: isNPC);
+  }
+
+  static List<String> generateEquipment(String characterType, String gameId) {
+    return _generateEquipment(characterType, gameId);
+  }
+
+  /// Liste d'équipement tirée au sort (3 à 5 objets distincts).
+  static List<String> generateRandomEquipmentList(String characterType, String gameId) {
+    final pool = _generateEquipment(characterType, gameId);
+    if (pool.isEmpty) return [];
+    final shuffled = List<String>.from(pool)..shuffle(_random);
+    final count = (pool.length >= 5) ? (_random.nextInt(3) + 3) : pool.length;
+    return shuffled.take(count).toList();
+  }
+
+  static String pickRandomTalent(GameSystem gameSystem) {
+    final list = gameSystem.availableTalents;
+    if (list.isEmpty) return 'Talent';
+    return list[_random.nextInt(list.length)];
+  }
+
+  static Power pickRandomPower(GameSystem gameSystem, String characterType) {
+    final templates = gameSystem.powers[characterType] ?? <PowerTemplate>[];
+    if (templates.isEmpty) return Power(name: 'Pouvoir', costPP: 1, description: '');
+    final t = templates[_random.nextInt(templates.length)];
+    return Power(name: t.name, costPP: t.costPP, description: t.description);
+  }
+
+  static MapEntry<String, int> pickRandomCompetence(GameSystem gameSystem, {bool isNPC = false}) {
+    final list = gameSystem.competences;
+    if (list.isEmpty) return MapEntry('Compétence', 1);
+    final name = list[_random.nextInt(list.length)];
+    final level = isNPC ? (_random.nextInt(2) + 1) : (_random.nextInt(3) + 1);
+    return MapEntry(name, level);
+  }
+
+  static String pickRandomEquipment(String characterType, String gameId) {
+    final list = _generateEquipment(characterType, gameId);
+    if (list.isEmpty) return 'Objet';
+    return list[_random.nextInt(list.length)];
   }
 }
