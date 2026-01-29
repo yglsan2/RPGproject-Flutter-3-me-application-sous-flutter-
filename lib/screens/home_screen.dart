@@ -5,6 +5,7 @@ import '../providers/character_provider.dart';
 import 'character_detail_screen.dart';
 import '../models/game_system.dart';
 import 'character_creation_screen.dart';
+import 'npc_creation_screen.dart';
 import '../theme/app_theme.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -28,6 +29,18 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.people, color: AppTheme.medievalGold),
+            tooltip: 'Créer un PNJ',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NPCCreationScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: Container(
         decoration: BoxDecoration(

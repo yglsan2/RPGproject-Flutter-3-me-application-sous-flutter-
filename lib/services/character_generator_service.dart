@@ -15,13 +15,17 @@ class CharacterGeneratorService {
     String? archetypeName,
     bool isNPC = false,
     bool useArchetype = true,
+    /// Si true (défaut), les PNJ ont moins de points/talents/pouvoirs. Si false, PNJ = même niveau que joueur.
+    bool npcDiminished = true,
+    /// Si fourni, ce supérieur est utilisé au lieu du premier de la liste.
+    String? superiorOverride,
   }) {
     developer.log(('🎲 [CHAR_GEN] Début génération personnage').toString());
     developer.log(('  - Système: ${gameSystem.name}').toString());
     developer.log(('  - Édition: $editionId').toString());
     developer.log(('  - Type: $characterType').toString());
     developer.log(('  - Archétype: ${archetypeName ?? "Aucun"}').toString());
-    developer.log(('  - PNJ: $isNPC').toString());
+    developer.log(('  - PNJ: $isNPC, amoindri: $npcDiminished').toString());
     
     final edition = gameSystem.getEdition(editionId);
     if (edition == null) {
@@ -30,8 +34,9 @@ class CharacterGeneratorService {
     }
     developer.log(('✅ [CHAR_GEN] Édition trouvée: ${edition.name}').toString());
 
-    final totalPoints = isNPC ? gameSystem.npcPoints : gameSystem.playerPoints;
-    developer.log(('📊 [CHAR_GEN] Points totaux: $totalPoints (${isNPC ? "PNJ" : "Joueur"})').toString());
+    final effectiveNpc = isNPC && npcDiminished;
+    final totalPoints = isNPC ? (npcDiminished ? gameSystem.npcPoints : gameSystem.playerPoints) : gameSystem.playerPoints;
+    developer.log(('📊 [CHAR_GEN] Points totaux: $totalPoints (${isNPC ? (npcDiminished ? "PNJ amoindri" : "PNJ pleine puissance") : "Joueur"})').toString());
     
     Map<String, int> characteristics;
 
@@ -72,7 +77,7 @@ class CharacterGeneratorService {
       developer.log(('💪 [CHAR_GEN] Prophecy/D&D - PV: $fatiguePoints, PM: $powerPoints').toString());
     }
 
-    final superior = gameSystem.superiors[characterType]?.first ?? 'Indépendant';
+    final superior = superiorOverride ?? gameSystem.superiors[characterType]?.first ?? 'Indépendant';
     developer.log(('👑 [CHAR_GEN] Supérieur: $superior').toString());
 
     List<String> talents = [];
@@ -96,11 +101,11 @@ class CharacterGeneratorService {
     }
 
     if (talents.isEmpty) {
-      talents = _generateRandomTalents(gameSystem.availableTalents, isNPC: isNPC);
+      talents = _generateRandomTalents(gameSystem.availableTalents, isNPC: effectiveNpc);
       developer.log(('🎲 [CHAR_GEN] Talents aléatoires générés: ${talents.length}').toString());
     }
     if (powers.isEmpty) {
-      powers = _generateRandomPowers(gameSystem.powers[characterType] ?? [], isNPC: isNPC);
+      powers = _generateRandomPowers(gameSystem.powers[characterType] ?? [], isNPC: effectiveNpc);
       developer.log(('🎲 [CHAR_GEN] Pouvoirs aléatoires générés: ${powers.length}').toString());
     }
 
@@ -130,7 +135,7 @@ class CharacterGeneratorService {
       powerPoints: powerPoints,
       talents: talents,
       powers: powers,
-      competences: _generateCompetences(gameSystem.competences, isNPC: isNPC),
+      competences: _generateCompetences(gameSystem.competences, isNPC: effectiveNpc),
       equipment: _generateEquipment(characterType, gameSystem.id),
       gameId: gameSystem.id,
       editionId: editionId,

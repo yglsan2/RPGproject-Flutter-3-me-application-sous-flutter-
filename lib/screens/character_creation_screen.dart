@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
@@ -20,11 +21,16 @@ class CharacterCreationScreen extends StatefulWidget {
 
 class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
   String? _selectedCharacterType;
+  String? _selectedSuperior;
   String? _selectedArchetype;
   bool _isNPC = false;
+  bool _npcDiminished = true;
   bool _useArchetype = true;
   String _nameOrigin = 'Fantasy';
   String _nameStyle = 'Classique';
+  int _currentStep = 0;
+  static const int _maxStep = 4;
+  final Random _random = Random();
 
   @override
   Widget build(BuildContext context) {
@@ -85,33 +91,105 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
               );
             }
 
-            return ListView(
-              padding: const EdgeInsets.all(16),
+            return Column(
               children: [
-                _buildCharacterTypeSelector(game),
-                const SizedBox(height: 16),
-                _buildNPCSelector(),
-                const SizedBox(height: 16),
-                if (_selectedCharacterType != null) ...[
-                  ArchetypeSelector(
-                    characterType: _selectedCharacterType!,
-                    selectedArchetype: _selectedArchetype,
-                    onArchetypeChanged: (archetype) {
-                      setState(() {
-                        _selectedArchetype = archetype;
-                        gameProvider.saveArchetype(_selectedCharacterType!, archetype ?? '');
-                      });
+                _buildBreadcrumb(game, gameProvider),
+                Expanded(
+                  child: Stepper(
+                    currentStep: _currentStep,
+                    onStepContinue: () {
+                      if (_currentStep < _maxStep) setState(() => _currentStep++);
                     },
-                    onUseArchetypeChanged: (value) {
-                      setState(() {
-                        _useArchetype = value;
-                      });
+                    onStepCancel: () {
+                      if (_currentStep > 0) setState(() => _currentStep--);
                     },
-                    useArchetype: _useArchetype,
+                    controlsBuilder: (context, details) {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: Row(
+                          children: [
+                            ElevatedButton(
+                              onPressed: details.onStepContinue,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.medievalGold,
+                                foregroundColor: AppTheme.medievalDarkBrown,
+                              ),
+                              child: Text(_currentStep == _maxStep ? 'Récapitulatif' : 'Suivant'),
+                            ),
+                            if (_currentStep > 0) ...[
+                              const SizedBox(width: 12),
+                              TextButton(
+                                onPressed: details.onStepCancel,
+                                child: const Text('Précédent'),
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    },
+                    steps: [
+                      Step(
+                        title: const Text('Type & options'),
+                        subtitle: _selectedCharacterType != null ? Text(_selectedCharacterType!) : null,
+                        isActive: _currentStep >= 0,
+                        state: _currentStep > 0 ? StepState.complete : StepState.indexed,
+                        content: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildCharacterTypeSelector(game),
+                            const SizedBox(height: 16),
+                            _buildNPCSelector(),
+                          ],
+                        ),
+                      ),
+                      Step(
+                        title: const Text('Supérieur'),
+                        subtitle: _selectedSuperior != null ? Text(_selectedSuperior!, overflow: TextOverflow.ellipsis) : null,
+                        isActive: _currentStep >= 1,
+                        state: _currentStep > 1 ? StepState.complete : StepState.indexed,
+                        content: _buildSuperiorSelector(game),
+                      ),
+                      Step(
+                        title: const Text('Archétype'),
+                        subtitle: _selectedArchetype != null ? Text(_selectedArchetype!, overflow: TextOverflow.ellipsis) : null,
+                        isActive: _currentStep >= 2,
+                        state: _currentStep > 2 ? StepState.complete : StepState.indexed,
+                        content: _selectedCharacterType == null
+                            ? const Padding(padding: EdgeInsets.all(16), child: Text('Choisissez d\'abord un type.'))
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  ArchetypeSelector(
+                                    characterType: _selectedCharacterType!,
+                                    selectedArchetype: _selectedArchetype,
+                                    onArchetypeChanged: (archetype) {
+                                      setState(() {
+                                        _selectedArchetype = archetype;
+                                        gameProvider.saveArchetype(_selectedCharacterType!, archetype ?? '');
+                                      });
+                                    },
+                                    onUseArchetypeChanged: (value) => setState(() => _useArchetype = value),
+                                    useArchetype: _useArchetype,
+                                  ),
+                                ],
+                              ),
+                      ),
+                      Step(
+                        title: const Text('Nom'),
+                        subtitle: Text(_nameOrigin != 'Fantasy' || _nameStyle != 'Classique' ? '$_nameOrigin · $_nameStyle' : ''),
+                        isActive: _currentStep >= 3,
+                        state: _currentStep > 3 ? StepState.complete : StepState.indexed,
+                        content: _buildNameGenerator(),
+                      ),
+                      Step(
+                        title: const Text('Récapitulatif'),
+                        isActive: _currentStep >= 4,
+                        state: StepState.indexed,
+                        content: _buildSummaryStep(game, gameProvider),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  _buildNameGenerator(),
-                ],
+                ),
               ],
             );
           },
@@ -187,6 +265,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                         setState(() {
                           _selectedCharacterType = selected ? type : null;
                           _selectedArchetype = null;
+                          _selectedSuperior = null;
                         });
                       },
                     ),
@@ -222,7 +301,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                   const Text('Personnage Non-Joueur (PNJ)'),
                 ],
               ),
-              subtitle: const Text('Génère un PNJ avec des capacités réduites'),
+              subtitle: Text(_isNPC && _npcDiminished ? 'Capacités réduites' : _isNPC ? 'Même niveau que joueur' : 'Personnage joueur'),
               value: _isNPC,
               onChanged: (value) {
                 setState(() {
@@ -231,6 +310,15 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
               },
               activeThumbColor: AppTheme.medievalGold,
             ),
+            if (_isNPC) ...[
+              SwitchListTile(
+                title: const Text('PNJ amoindri'),
+                subtitle: const Text('Désactiver = PNJ avec caractéristiques de joueur'),
+                value: _npcDiminished,
+                onChanged: (value) => setState(() => _npcDiminished = value),
+                activeThumbColor: AppTheme.medievalGold,
+              ),
+            ],
             if (_isNPC)
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -295,6 +383,201 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
               color: AppTheme.medievalGold,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBreadcrumb(GameSystem game, GameProvider gameProvider) {
+    final editionName = game.getEdition(gameProvider.currentEditionId ?? '')?.name ?? '';
+    final chips = <Widget>[
+      Chip(
+        avatar: const Icon(Icons.menu_book, size: 18, color: AppTheme.medievalGold),
+        label: Text(game.name, style: const TextStyle(fontSize: 12)),
+        backgroundColor: AppTheme.medievalBronze.withValues(alpha: 0.2),
+      ),
+      if (editionName.isNotEmpty)
+        Chip(
+          label: Text(editionName, style: const TextStyle(fontSize: 12)),
+          backgroundColor: AppTheme.medievalGold.withValues(alpha: 0.15),
+        ),
+      if (_selectedCharacterType != null)
+        Chip(
+          label: Text(_selectedCharacterType!, style: const TextStyle(fontSize: 12)),
+          backgroundColor: AppTheme.medievalGold.withValues(alpha: 0.2),
+        ),
+      if (_selectedSuperior != null)
+        Chip(
+          label: Text(_selectedSuperior!, style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis),
+          backgroundColor: AppTheme.medievalBronze.withValues(alpha: 0.2),
+        ),
+      if (_isNPC)
+        Chip(
+          label: Text(_npcDiminished ? 'PNJ amoindri' : 'PNJ pleine puissance', style: const TextStyle(fontSize: 11)),
+          backgroundColor: AppTheme.medievalBronze.withValues(alpha: 0.2),
+        ),
+    ];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: chips.map((c) => Padding(padding: const EdgeInsets.only(right: 6), child: c)).toList(),
+      ),
+    );
+  }
+
+  Widget _buildSuperiorSelector(GameSystem game) {
+    final superiors = game.superiors[_selectedCharacterType];
+    if (superiors == null || superiors.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(
+          'Aucun supérieur pour ce type.',
+          style: TextStyle(color: AppTheme.medievalBronze, fontStyle: FontStyle.italic),
+        ),
+      );
+    }
+    return Card(
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.medievalBronze.withValues(alpha: 0.2),
+              AppTheme.medievalGold.withValues(alpha: 0.1),
+            ],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.star, color: AppTheme.medievalGold, size: 24),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Supérieur (Blandine, Baal, etc.)',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: AppTheme.medievalDarkBrown,
+                    ),
+                  ),
+                  const Spacer(),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      setState(() => _selectedSuperior = superiors[_random.nextInt(superiors.length)]);
+                    },
+                    icon: const Icon(Icons.casino, size: 18),
+                    label: const Text('Aléatoire'),
+                    style: OutlinedButton.styleFrom(foregroundColor: AppTheme.medievalGold),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...superiors.take(12).map((s) {
+                return RadioListTile<String>(
+                  title: Text(s),
+                  value: s,
+                  groupValue: _selectedSuperior,
+                  onChanged: (value) => setState(() => _selectedSuperior = value),
+                  activeColor: AppTheme.medievalGold,
+                );
+              }),
+              if (superiors.length > 12)
+                TextButton(
+                  onPressed: () => _showAllSuperiors(superiors),
+                  child: Text('Voir tous (${superiors.length})'),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAllSuperiors(List<String> superiors) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Choisir un supérieur'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: superiors.length,
+            itemBuilder: (ctx, i) {
+              return RadioListTile<String>(
+                title: Text(superiors[i]),
+                value: superiors[i],
+                groupValue: _selectedSuperior,
+                onChanged: (v) {
+                  setState(() => _selectedSuperior = v);
+                  Navigator.pop(ctx);
+                },
+                activeColor: AppTheme.medievalGold,
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryStep(GameSystem game, GameProvider gameProvider) {
+    final editionName = game.getEdition(gameProvider.currentEditionId ?? '')?.name ?? '';
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Récapitulatif',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.medievalDarkBrown,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            _buildInfoRow('Jeu', game.name),
+            _buildInfoRow('Édition', editionName),
+            _buildInfoRow('Type', _selectedCharacterType ?? '—'),
+            _buildInfoRow('Supérieur', _selectedSuperior ?? 'Aléatoire'),
+            _buildInfoRow('Archétype', _useArchetype ? (_selectedArchetype ?? 'Aléatoire') : 'Non'),
+            _buildInfoRow('PNJ', _isNPC ? (_npcDiminished ? 'Oui (amoindri)' : 'Oui (pleine puissance)') : 'Non'),
+            _buildInfoRow('Nom', '$_nameOrigin · $_nameStyle'),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _generateCharacter,
+                icon: const Icon(Icons.check_circle),
+                label: const Text('Créer le personnage'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.medievalGold,
+                  foregroundColor: AppTheme.medievalDarkBrown,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: AppTheme.medievalDarkBrown, fontWeight: FontWeight.w500)),
+          Flexible(child: Text(value, style: const TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis, textAlign: TextAlign.end)),
         ],
       ),
     );
@@ -453,6 +736,8 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
         archetypeName: archetypeName,
         isNPC: _isNPC,
         useArchetype: _useArchetype,
+        npcDiminished: _npcDiminished,
+        superiorOverride: _selectedSuperior,
       );
 
       character.name = NameGeneratorService.generate(origin: _nameOrigin, style: _nameStyle);

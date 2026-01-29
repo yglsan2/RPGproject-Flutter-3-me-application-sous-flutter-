@@ -33,6 +33,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
   };
   List<String> _selectedPowers = [];
   String? _limitation;
+  bool _npcDiminished = true;
   final Random _random = Random();
 
   // Tables de pouvoirs selon le PDF
@@ -119,6 +120,8 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             _buildTypeSelector(),
+            const SizedBox(height: 16),
+            _buildNPCOptionsCard(),
             const SizedBox(height: 16),
             if (_selectedType == 'AUTRE') ...[_buildSubTypeSelector(), const SizedBox(height: 16)],
             const SizedBox(height: 16),
@@ -208,6 +211,29 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
     );
 
   }
+  Widget _buildNPCOptionsCard() {
+    return Card(
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.medievalCream,
+              AppTheme.medievalCream.withValues(alpha: 0.7),
+            ],
+          ),
+        ),
+        child: SwitchListTile(
+          title: const Text('PNJ amoindri'),
+          subtitle: const Text('Désactiver = PNJ avec caractéristiques de joueur'),
+          value: _npcDiminished,
+          onChanged: (value) => setState(() => _npcDiminished = value),
+          activeThumbColor: AppTheme.medievalGold,
+        ),
+      ),
+    );
+  }
+
   Widget _buildSubTypeSelector() {
     return Card(
       child: Container(
@@ -821,6 +847,8 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
       characterType: characterType,
       isNPC: true,
       useArchetype: false,
+      npcDiminished: _npcDiminished,
+      superiorOverride: _selectedSuperior,
     );
 
     // Mettre à jour avec les valeurs du formulaire

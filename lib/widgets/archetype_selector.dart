@@ -106,27 +106,36 @@ class ArchetypeSelector extends StatelessWidget {
                           final archetype = archetypes[name]!;
                           return DropdownMenuItem(
                             value: name,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(Icons.star, color: AppTheme.medievalGold, size: 18),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      name,
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 26, top: 4),
-                                  child: Text(
-                                    archetype.description,
-                                    style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxHeight: 60),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(Icons.star, color: AppTheme.medievalGold, size: 18),
+                                      const SizedBox(width: 8),
+                                      Flexible(
+                                        child: Text(
+                                          name,
+                                          style: const TextStyle(fontWeight: FontWeight.bold),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                              ],
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 26, top: 4),
+                                    child: Text(
+                                      archetype.description,
+                                      style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         }),
