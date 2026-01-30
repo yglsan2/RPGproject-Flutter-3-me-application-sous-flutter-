@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/game_provider.dart';
 import '../providers/character_provider.dart';
+import '../services/storage_service.dart';
 import 'character_detail_screen.dart';
+import '../models/character.dart';
 import '../models/game_system.dart';
 import 'character_creation_screen.dart';
 import 'npc_creation_screen.dart';
 import '../theme/app_theme.dart';
 import '../utils/stat_descriptions.dart';
+import '../widgets/language_selector.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -21,9 +26,9 @@ class HomeScreen extends StatelessWidget {
           children: [
             const Icon(Icons.auto_awesome, color: AppTheme.medievalGold),
             const SizedBox(width: 8),
-            const Text(
-              'Grimoire des Héros',
-              style: TextStyle(
+            Text(
+              AppLocalizations.trSafe(context, 'home_title'),
+              style: const TextStyle(
                 letterSpacing: 2,
               ),
             ),
@@ -31,21 +36,27 @@ class HomeScreen extends StatelessWidget {
         ),
         elevation: 0,
         actions: [
+          LanguageSelectorButton(),
           IconButton(
             icon: const Icon(Icons.info_outline, color: AppTheme.medievalGold),
-            tooltip: 'À propos',
+            tooltip: AppLocalizations.trSafe(context, 'home_about'),
             onPressed: () {
               showAboutDialog(
                 context: context,
-                applicationName: 'ManyFaces',
-                applicationVersion: '1.0.0',
-                applicationLegalese: 'Logiciel créé par DesertYGL.\n\nLibre, sous licence GNU GPL v3.',
+                applicationName: AppLocalizations.trSafe(context, 'about_app_name'),
+                applicationVersion: AppLocalizations.trSafe(context, 'about_version'),
+                applicationLegalese: AppLocalizations.trSafe(context, 'about_legal'),
               );
             },
           ),
           IconButton(
+            icon: const Icon(Icons.upload_file, color: AppTheme.medievalGold),
+            tooltip: AppLocalizations.trSafe(context, 'home_import_character'),
+            onPressed: () => _importCharacter(context),
+          ),
+          IconButton(
             icon: const Icon(Icons.people, color: AppTheme.medievalGold),
-            tooltip: 'Créer un PNJ',
+            tooltip: AppLocalizations.trSafe(context, 'home_create_npc'),
             onPressed: () {
               Navigator.push(
                 context,
@@ -96,9 +107,9 @@ class HomeScreen extends StatelessWidget {
             );
           },
           icon: const Icon(Icons.add_circle_outline, size: 28),
-          label: const Text(
-            'Forger un Héros',
-            style: TextStyle(
+          label: Text(
+            AppLocalizations.trSafe(context, 'home_forge_hero'),
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
             ),
@@ -140,7 +151,7 @@ class HomeScreen extends StatelessWidget {
               Icon(Icons.menu_book, color: AppTheme.medievalGold, size: 24),
               const SizedBox(width: 8),
               Text(
-                'Système de Jeu',
+                AppLocalizations.trSafe(context, 'game_system'),
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: AppTheme.medievalDarkBrown,
                       fontWeight: FontWeight.bold,
@@ -150,7 +161,9 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<GameSystem>(
-            initialValue: provider.currentGame,
+            value: provider.gameSystems.isEmpty
+                ? null
+                : (provider.gameSystems.contains(provider.currentGame) ? provider.currentGame : provider.gameSystems.first),
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.white,
@@ -196,7 +209,9 @@ class HomeScreen extends StatelessWidget {
                 border: Border.all(color: AppTheme.medievalGold.withValues(alpha: 0.25)),
               ),
               child: Text(
-                provider.currentGame!.description,
+                provider.currentGame!.id == 'ins-mv'
+                    ? AppLocalizations.trSafe(context, 'game_insmv_description')
+                    : provider.currentGame!.description,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppTheme.medievalDarkBrown,
                       fontStyle: FontStyle.italic,
@@ -218,7 +233,7 @@ class HomeScreen extends StatelessWidget {
             Icon(Icons.auto_awesome, size: 64, color: AppTheme.medievalGold.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             Text(
-              'Choisissez un système de jeu',
+              AppLocalizations.trSafe(context, 'choose_game_system'),
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: AppTheme.medievalBronze,
                   ),
@@ -242,6 +257,11 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildEditionSelector(BuildContext context, GameProvider provider) {
     final game = provider.currentGame!;
+    final editionIds = game.editions.map((e) => e.id).toList();
+    final validEditionId = provider.currentEditionId != null &&
+            (provider.currentEditionId == 'random' || editionIds.contains(provider.currentEditionId))
+        ? provider.currentEditionId
+        : (game.editions.isNotEmpty ? game.editions.first.id : null);
     return Card(
       child: Container(
         decoration: BoxDecoration(
@@ -265,7 +285,7 @@ class HomeScreen extends StatelessWidget {
                   Icon(Icons.library_books, color: AppTheme.medievalGold, size: 24),
                   const SizedBox(width: 8),
                   Text(
-                    'Édition',
+                    AppLocalizations.trSafe(context, 'edition'),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppTheme.medievalDarkBrown,
@@ -275,7 +295,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                initialValue: provider.currentEditionId,
+                value: validEditionId,
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.white,
@@ -309,7 +329,7 @@ class HomeScreen extends StatelessWidget {
                       children: [
                         const Icon(Icons.casino, color: AppTheme.medievalGold),
                         const SizedBox(width: 8),
-                        const Text('🎲 Choix aléatoire'),
+                        Text(AppLocalizations.trSafe(context,'random_choice')),
                       ],
                     ),
                   ),
@@ -334,30 +354,41 @@ class HomeScreen extends StatelessWidget {
                       width: 1,
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        game.getEdition(provider.currentEditionId!)?.description ?? '',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontStyle: FontStyle.italic,
-                              color: AppTheme.medievalDarkBrown,
+                  child: Builder(
+                    builder: (context) {
+                      final edition = game.getEdition(provider.currentEditionId!);
+                      if (edition == null) return const SizedBox();
+                      final descText = edition.descriptionKey != null
+                          ? AppLocalizations.trSafe(context, edition.descriptionKey!)
+                          : edition.description;
+                      final changesText = edition.changesFromPreviousKey != null
+                          ? AppLocalizations.trSafe(context, edition.changesFromPreviousKey!)
+                          : edition.changesFromPrevious;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            descText,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontStyle: FontStyle.italic,
+                                  color: AppTheme.medievalDarkBrown,
+                                ),
+                          ),
+                          if (changesText != null && changesText.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            const Divider(height: 1),
+                            const SizedBox(height: 8),
+                            Text(
+                              changesText,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: AppTheme.medievalBronze,
+                                    fontStyle: FontStyle.italic,
+                                  ),
                             ),
-                      ),
-                      if (game.getEdition(provider.currentEditionId!)?.changesFromPrevious != null &&
-                          game.getEdition(provider.currentEditionId!)!.changesFromPrevious!.isNotEmpty) ...[
-                        const SizedBox(height: 10),
-                        const Divider(height: 1),
-                        const SizedBox(height: 8),
-                        Text(
-                          game.getEdition(provider.currentEditionId!)!.changesFromPrevious!,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppTheme.medievalBronze,
-                                fontStyle: FontStyle.italic,
-                              ),
-                        ),
-                      ],
-                    ],
+                          ],
+                        ],
+                      );
+                    },
                   ),
                 ),
               ],
@@ -395,9 +426,9 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   Icon(Icons.auto_awesome, color: AppTheme.medievalGold, size: 24),
                   const SizedBox(width: 8),
-                  Text(
-                    'Caractéristiques de ${edition.name}',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      Text(
+                        AppLocalizations.trSafe(context, 'characteristics_edition', {'name': edition.name}),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppTheme.medievalDarkBrown,
                         ),
@@ -410,7 +441,7 @@ class HomeScreen extends StatelessWidget {
                 runSpacing: 10,
                 children: edition.statNames.map((stat) {
                   return Tooltip(
-                    message: StatDescriptions.getOrDefault(stat),
+                    message: StatDescriptions.getTranslatedDescription(context, stat),
                     preferBelow: false,
                     child: MouseRegion(
                       cursor: SystemMouseCursors.help,
@@ -435,7 +466,7 @@ class HomeScreen extends StatelessWidget {
                             Icon(Icons.star, color: AppTheme.medievalGold, size: 18),
                             const SizedBox(width: 6),
                             Text(
-                              stat,
+                              StatDescriptions.getTranslatedName(context, stat),
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.medievalDarkBrown,
@@ -489,7 +520,7 @@ class HomeScreen extends StatelessWidget {
                     Icon(Icons.book_outlined, size: 48, color: AppTheme.medievalGold.withValues(alpha: 0.5)),
                     const SizedBox(height: 16),
                     Text(
-                      'Aucun personnage sauvegardé',
+                      AppLocalizations.trSafe(context,'no_saved_characters'),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             color: AppTheme.medievalBronze,
                             fontStyle: FontStyle.italic,
@@ -525,7 +556,7 @@ class HomeScreen extends StatelessWidget {
                       Icon(Icons.book, color: AppTheme.medievalGold, size: 24),
                       const SizedBox(width: 8),
                       Text(
-                        'Personnages Sauvegardés (\${characters.length})',
+                        AppLocalizations.trSafe(context, 'saved_characters_count', {'count': '${characters.length}'}),
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: AppTheme.medievalDarkBrown,
@@ -569,7 +600,7 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ),
                         subtitle: Text(
-                          '\${character.type} - \${character.superior}',
+                          '${character.type} - ${character.superior}',
                           style: TextStyle(
                             color: AppTheme.medievalBronze,
                             fontSize: 12,
@@ -580,7 +611,7 @@ class HomeScreen extends StatelessWidget {
                           children: [
                             if (character.isNPC)
                               Chip(
-                                label: const Text('PNJ', style: TextStyle(fontSize: 10)),
+                                label: Text(AppLocalizations.trSafe(context,'npc'), style: const TextStyle(fontSize: 10)),
                                 backgroundColor: AppTheme.medievalBronze.withValues(alpha: 0.3),
                               ),
                             IconButton(
@@ -606,6 +637,48 @@ class HomeScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  static Future<void> _importCharacter(BuildContext context) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['omf', 'json'],
+      allowMultiple: false,
+    );
+    final path = result?.files.singleOrNull?.path;
+    if (path == null) return;
+
+    Character? character;
+    try {
+      character = await StorageService.importCharacterFromFile(path);
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.trSafe(context, 'import_error_file'))),
+      );
+      return;
+    }
+
+    if (!context.mounted) return;
+    if (character == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.trSafe(context, 'import_error_invalid'))),
+      );
+      return;
+    }
+
+    final characterProvider = context.read<CharacterProvider>();
+    await characterProvider.saveCharacter(character);
+    characterProvider.setCurrentCharacter(character);
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.trSafe(context, 'import_success', {'name': character.name}))),
+    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CharacterDetailScreen()),
     );
   }
 }

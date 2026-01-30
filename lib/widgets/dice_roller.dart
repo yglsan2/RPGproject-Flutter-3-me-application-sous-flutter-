@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'dart:async';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/game_provider.dart';
 import '../providers/character_provider.dart';
 import '../data/game_data.dart';
@@ -37,7 +38,6 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
   List<int> _rollingDice = [1, 1, 1];
   late AnimationController _diceAnimationController;
   late AnimationController _glowAnimationController;
-  late Animation<double> _diceRotation;
   late Animation<double> _diceTumble;
   late Animation<double> _diceBounce;
   late Animation<double> _glowAnimation;
@@ -63,9 +63,6 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
       vsync: this,
     )..repeat(reverse: true);
 
-    _diceRotation = Tween<double>(begin: 0, end: 2 * pi).animate(
-      CurvedAnimation(parent: _diceAnimationController, curve: Curves.easeInOut),
-    );
     _diceTumble = Tween<double>(begin: 0, end: 5 * pi).animate(
       CurvedAnimation(parent: _diceAnimationController, curve: Curves.easeInOut),
     );
@@ -118,7 +115,16 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
     await Future.delayed(const Duration(milliseconds: 800));
     timer.cancel();
 
-    final rolled = List.generate(_numDice, (_) => RollD6.roll());
+    List<int> rolled = List.generate(_numDice, (_) => RollD6.roll());
+    if (_numDice == 3 && mounted) {
+      final characterType = context.read<CharacterProvider>().currentCharacter?.type;
+      final rnd = Random().nextDouble();
+      if (characterType == 'Ange' || characterType == 'Humain') {
+        if (rnd < 0.005) rolled = [1, 1, 1];
+      } else if (characterType == 'Démon') {
+        if (rnd < 0.005) rolled = [6, 6, 6];
+      }
+    }
     final total = rolled.reduce((a, b) => a + b) + _bonus;
     final threshold = _selectedCharacteristic * _numDice;
     final isTriple = _numDice == 3 && rolled[0] == rolled[1] && rolled[1] == rolled[2];
@@ -180,68 +186,50 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
   }
 
   /// Texte explicatif INS/MV pour 111 (intervention divine) selon le type de personnage.
-  String _getTriple1Title(String? characterType) {
-    switch (characterType) {
-      case 'Ange':
-        return '✨ 111 — INTERVENTION DIVINE ✨';
-      case 'Démon':
-        return '✨ 111 — INTERVENTION DIVINE ✨';
-      case 'Humain':
-        return '✨ 111 — INTERVENTION DIVINE ✨';
-      default:
-        return '✨ 111 — INTERVENTION DIVINE ✨';
-    }
-  }
+  String _getTriple1Title(BuildContext context) =>
+      AppLocalizations.trSafe(context,'dice_111_title');
 
-  String _getTriple1Subtitle(String? characterType) {
+  String _getTriple1Subtitle(BuildContext context, String? characterType) {
     switch (characterType) {
       case 'Ange':
-        return 'Réussite critique pour les anges ! Les forces célestes bénissent votre action.';
+        return AppLocalizations.trSafe(context,'dice_111_angel');
       case 'Démon':
-        return 'Échec critique pour les démons. L\'intervention divine s\'oppose à vous.';
+        return AppLocalizations.trSafe(context,'dice_111_demon');
       case 'Humain':
-        return 'Signe favorable pour les humains : bénédiction, la chance vous sourit.';
+        return AppLocalizations.trSafe(context,'dice_111_human');
       default:
-        return 'Intervention divine (l\'Unique). Selon votre camp : très bénéfique pour les anges, défavorable pour les démons, favorable pour les humains.';
+        return AppLocalizations.trSafe(context,'dice_111_generic');
     }
   }
 
   /// Texte explicatif INS/MV pour 666 (intervention démoniaque) selon le type de personnage.
-  String _getTriple6Title(String? characterType) {
+  String _getTriple6Title(BuildContext context) =>
+      AppLocalizations.trSafe(context,'dice_666_title');
+
+  String _getTriple6Subtitle(BuildContext context, String? characterType) {
     switch (characterType) {
       case 'Ange':
+        return AppLocalizations.trSafe(context,'dice_666_angel');
       case 'Démon':
+        return AppLocalizations.trSafe(context,'dice_666_demon');
       case 'Humain':
-        return '🔥 666 — INTERVENTION DÉMONIAQUE 🔥';
+        return AppLocalizations.trSafe(context,'dice_666_human');
       default:
-        return '🔥 666 — INTERVENTION DÉMONIAQUE 🔥';
+        return AppLocalizations.trSafe(context,'dice_666_generic');
     }
   }
 
-  String _getTriple6Subtitle(String? characterType) {
-    switch (characterType) {
-      case 'Ange':
-        return 'Échec critique pour les anges. Les forces infernales s\'opposent à vous.';
-      case 'Démon':
-        return 'Réussite critique pour les démons ! Les forces infernales influencent le destin en votre faveur.';
-      case 'Humain':
-        return 'Signe défavorable pour les humains : malédiction, le sort s\'acharne.';
-      default:
-        return 'Intervention démoniaque (chiffre de la Bête). Très bénéfique pour les démons, défavorable pour les anges, défavorable pour les humains.';
-    }
-  }
-
-  String _getRollDescription(String? characterType) {
+  String _getRollDescription(BuildContext context, String? characterType) {
     if (_isTriple1 == true) {
-      return _getTriple1Subtitle(characterType);
+      return _getTriple1Subtitle(context, characterType);
     } else if (_isTriple6 == true) {
-      return _getTriple6Subtitle(characterType);
+      return _getTriple6Subtitle(context, characterType);
     } else if (_isOtherTriple == true && _otherTripleValue != null) {
-      return 'Triple $_otherTripleValue$_otherTripleValue$_otherTripleValue : selon les éditions INS/MV, certaines combinaisons identiques peuvent avoir des effets spéciaux. Consultez votre livre de règles.';
+      return AppLocalizations.trSafe(context,'dice_other_triple');
     } else if (_isSuccess == true) {
-      return 'Les dés roulent favorablement... La chance vous sourit !';
+      return AppLocalizations.trSafe(context,'dice_success');
     } else {
-      return 'Les dés tournent et s\'arrêtent... Le sort n\'est pas favorable.';
+      return AppLocalizations.trSafe(context,'dice_failure');
     }
   }
 
@@ -295,7 +283,7 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
               decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.white,
-                labelText: 'Type de jet',
+                labelText: AppLocalizations.trSafe(context, 'roll_type'),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: AppTheme.medievalBronze, width: 2),
@@ -312,7 +300,7 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
               items: statNames.map((name) {
                 return DropdownMenuItem(
                   value: name,
-                  child: Text('Jet de $name'),
+                  child: Text(AppLocalizations.trSafe(context, 'jet_of', {'name': name})),
                 );
               }).toList(),
               onChanged: (name) {
@@ -330,7 +318,7 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
             Row(
               children: [
                 Text(
-                  'Nombre de dés :',
+                  AppLocalizations.trSafe(context,'roll_dice_count'),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.medievalDarkBrown,
                     fontWeight: FontWeight.w500,
@@ -363,7 +351,7 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
-                      labelText: 'Valeur carac. (1–6)',
+                      labelText: AppLocalizations.trSafe(context, 'roll_carac_value'),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: AppTheme.medievalBronze, width: 2),
@@ -387,7 +375,7 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
-                      labelText: 'Bonus',
+                      labelText: AppLocalizations.trSafe(context,'roll_bonus'),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: AppTheme.medievalBronze, width: 2),
@@ -558,7 +546,7 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
                                 ),
                               ),
                               child: Text(
-                                _getRollDescription(character?.type),
+                                _getRollDescription(context, character?.type),
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   fontSize: 14,
@@ -570,14 +558,14 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
                             const SizedBox(height: 12),
                             if (_isTriple1 == true)
                               _buildCriticalBanner(
-                                _getTriple1Title(character?.type),
-                                _getTriple1Subtitle(character?.type),
+                                _getTriple1Title(context),
+                                _getTriple1Subtitle(context, character?.type),
                                 Colors.green,
                               )
                             else if (_isTriple6 == true)
                               _buildCriticalBanner(
-                                _getTriple6Title(character?.type),
-                                _getTriple6Subtitle(character?.type),
+                                _getTriple6Title(context),
+                                _getTriple6Subtitle(context, character?.type),
                                 AppTheme.medievalRed,
                               )
                             else if (_isSuccess == true)
@@ -588,8 +576,8 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: Colors.green, width: 2),
                                 ),
-                                child: const Text(
-                                  '✅ RÉUSSITE !',
+                                child: Text(
+                                  '✅ ${AppLocalizations.trSafe(context,'success')}',
                                   style: TextStyle(
                                     color: Colors.green,
                                     fontWeight: FontWeight.bold,

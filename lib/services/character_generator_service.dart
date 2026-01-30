@@ -3,7 +3,6 @@ import 'dart:developer' as developer;
 import '../models/character.dart';
 import '../models/game_system.dart';
 import '../models/game_edition.dart';
-import '../utils/roll_d6.dart';
 import 'npc_generator_service.dart';
 
 class CharacterGeneratorService {
@@ -94,7 +93,13 @@ class CharacterGeneratorService {
             (p) => p.name == powerName,
             orElse: () => PowerTemplate(name: powerName, costPP: 1),
           );
-          return Power(name: template.name, costPP: template.costPP, description: template.description);
+          return Power(
+            name: template.name,
+            costPP: template.costPP,
+            description: template.description,
+            nameKey: template.nameKey,
+            descriptionKey: template.descriptionKey,
+          );
         }).toList();
         developer.log(('🎭 [CHAR_GEN] Talents depuis archétype: ${talents.length}').toString());
         developer.log(('✨ [CHAR_GEN] Pouvoirs depuis archétype: ${powers.length}').toString());
@@ -147,6 +152,12 @@ class CharacterGeneratorService {
     return character;
   }
 
+  /// Poids pour une valeur de caractéristique (INS/MV : favorise 2 et 3, évite 0, 1, 6).
+  static double _weightForStatValue(int value, int minValue, int maxValue) {
+    final center = (minValue <= 2 && maxValue >= 3) ? 2.5 : (minValue + maxValue) / 2.0;
+    return 1.0 / (1.0 + (value - center) * (value - center));
+  }
+
   static Map<String, int> _generateBalancedStats(List<String> statNames, int totalPoints, int minValue, int maxValue) {
     developer.log(('📊 [CHAR_GEN] Génération stats équilibrées').toString());
     developer.log(('  - Stats: ${statNames.length}').toString());
@@ -185,17 +196,13 @@ class CharacterGeneratorService {
     }
 
     while (remainingPoints > 0) {
-      var attempts = 0;
-      while (attempts < 100 && remainingPoints > 0) {
-        final statIndex = _random.nextInt(numStats);
-        if (variations[statIndex] < maxPerStat) {
-          variations[statIndex]++;
-          remainingPoints--;
-          break;
-        }
-        attempts++;
+      final statIndex = _selectStatIndexForDistribution(stats, statNames, targetAverage, minValue, maxValue, variations, maxPerStat);
+      if (statIndex != -1 && variations[statIndex] < maxPerStat) {
+        variations[statIndex]++;
+        remainingPoints--;
+      } else {
+        break;
       }
-      if (attempts >= 100) break;
     }
 
     for (var i = 0; i < statNames.length; i++) {
@@ -247,6 +254,8 @@ class CharacterGeneratorService {
       if (currentValue <= minValue + 1) {
         weight = 2.5;
       } else if (currentValue >= maxValue - 1) {
+        weight = 0.15;
+      } else if (currentValue >= maxValue - 2) {
         weight = 0.5;
       } else if (distanceFromAverage < 1.0) {
         weight = 1.5;
@@ -396,13 +405,7 @@ class CharacterGeneratorService {
     
     final weights = <int, double>{};
     for (int i = statMin; i <= statMax; i++) {
-      if (i == statMin || i == statMax) {
-        weights[i] = 0.5;
-      } else if (i == statMin + 1 || i == statMax - 1) {
-        weights[i] = 1.0;
-      } else {
-        weights[i] = 2.0;
-      }
+      weights[i] = _weightForStatValue(i, minValue, maxValue);
     }
     
     final totalWeight = weights.values.reduce((a, b) => a + b);
@@ -445,7 +448,13 @@ class CharacterGeneratorService {
     final available = List.from(availablePowers);
     for (var i = 0; i < numPowers && available.isNotEmpty; i++) {
       final template = available.removeAt(_random.nextInt(available.length));
-      selected.add(Power(name: template.name, costPP: template.costPP, description: template.description));
+      selected.add(Power(
+        name: template.name,
+        costPP: template.costPP,
+        description: template.description,
+        nameKey: template.nameKey,
+        descriptionKey: template.descriptionKey,
+      ));
     }
     return selected;
   }
@@ -511,7 +520,13 @@ class CharacterGeneratorService {
     final templates = gameSystem.powers[characterType] ?? <PowerTemplate>[];
     if (templates.isEmpty) return Power(name: 'Pouvoir', costPP: 1, description: '');
     final t = templates[_random.nextInt(templates.length)];
-    return Power(name: t.name, costPP: t.costPP, description: t.description);
+    return Power(
+      name: t.name,
+      costPP: t.costPP,
+      description: t.description,
+      nameKey: t.nameKey,
+      descriptionKey: t.descriptionKey,
+    );
   }
 
   static MapEntry<String, int> pickRandomCompetence(GameSystem gameSystem, {bool isNPC = false}) {

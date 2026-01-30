@@ -38,7 +38,7 @@ class GameProvider extends ChangeNotifier {
     final savedGameId = prefs.getString('saved_game_id');
     final savedEditionId = prefs.getString('saved_edition_id');
     
-    if (savedGameId != null) {
+    if (savedGameId != null && _gameSystems.isNotEmpty) {
       developer.log(('  - Jeu sauvegardé: $savedGameId').toString());
       _currentGame = _gameSystems.firstWhere(
         (g) => g.id == savedGameId,
@@ -47,9 +47,16 @@ class GameProvider extends ChangeNotifier {
       developer.log(('  ✅ Jeu restauré: ${_currentGame!.name}').toString());
     }
     
-    if (savedEditionId != null) {
-      developer.log(('  - Édition sauvegardée: $savedEditionId').toString());
-      _currentEditionId = savedEditionId;
+    if (savedEditionId != null && _currentGame != null && _currentGame!.editions.isNotEmpty) {
+      final valid = _currentGame!.editions.any((e) => e.id == savedEditionId);
+      if (valid || savedEditionId == 'random') {
+        developer.log(('  - Édition sauvegardée: $savedEditionId').toString());
+        _currentEditionId = savedEditionId;
+      } else {
+        _currentEditionId = _currentGame!.editions.first.id;
+        prefs.setString('saved_edition_id', _currentEditionId!);
+        developer.log(('  - Édition invalide, défaut: $_currentEditionId').toString());
+      }
     } else if (_currentGame != null && _currentGame!.editions.isNotEmpty) {
       _currentEditionId = _currentGame!.editions.first.id;
       developer.log(('  - Édition par défaut: $_currentEditionId').toString());

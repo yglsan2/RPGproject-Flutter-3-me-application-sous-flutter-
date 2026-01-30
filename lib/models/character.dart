@@ -124,14 +124,36 @@ class Power {
   final String name;
   final int costPP;
   final String description;
+  /// Clé l10n pour le nom (si non null, l'UI utilisera la traduction).
+  final String? nameKey;
+  /// Clé l10n pour la description (si non null, l'UI utilisera la traduction).
+  final String? descriptionKey;
 
-  Power({required this.name, required this.costPP, this.description = ''});
+  Power({
+    required this.name,
+    required this.costPP,
+    this.description = '',
+    this.nameKey,
+    this.descriptionKey,
+  });
 
   factory Power.fromJson(Map<String, dynamic> json) {
-    return Power(name: json['name'], costPP: json['costPP'], description: json['description'] ?? '');
+    return Power(
+      name: json['name'],
+      costPP: json['costPP'],
+      description: json['description'] ?? '',
+      nameKey: json['nameKey'] as String?,
+      descriptionKey: json['descriptionKey'] as String?,
+    );
   }
 
   Map<String, dynamic> toJson() {
-    return {'name': name, 'costPP': costPP, 'description': description};
+    return {
+      'name': name,
+      'costPP': costPP,
+      'description': description,
+      'nameKey': nameKey,
+      'descriptionKey': descriptionKey,
+    };
   }
 }

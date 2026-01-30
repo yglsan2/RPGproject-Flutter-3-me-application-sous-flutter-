@@ -24,7 +24,9 @@ class RollD6 {
   static List<int> rollMultiple(int n) {
     if (n <= 0) return [];
     final list = <int>[];
-    for (var i = 0; i < n; i++) list.add(roll());
+    for (var i = 0; i < n; i++) {
+      list.add(roll());
+    }
     return list;
   }
 }

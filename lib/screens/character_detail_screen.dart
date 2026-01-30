@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/character_provider.dart';
 import '../providers/game_provider.dart';
 import '../models/character.dart' show Character, Power;
@@ -64,7 +65,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
         if (character == null) {
           return Scaffold(
             appBar: AppBar(
-              title: const Text('Détails du Personnage'),
+              title: Text(AppLocalizations.trSafe(context, 'detail_screen_title')),
             ),
             body: Center(
               child: Column(
@@ -73,7 +74,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                   Icon(Icons.person_off, size: 64, color: AppTheme.medievalGold.withValues(alpha: 0.5)),
                   const SizedBox(height: 16),
                   Text(
-                    'Aucun personnage sélectionné',
+                    AppLocalizations.trSafe(context, 'no_character_selected'),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           color: AppTheme.medievalBronze,
                         ),
@@ -82,7 +83,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                   ElevatedButton.icon(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.arrow_back),
-                    label: const Text('Retour'),
+                    label: Text(AppLocalizations.trSafe(context, 'back')),
                   ),
                 ],
               ),
@@ -102,46 +103,76 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                   color: AppTheme.medievalGold,
                 ),
                 const SizedBox(width: 8),
-                const Text('Fiche du Héros'),
+                Text(AppLocalizations.trSafe(context,'detail_sheet_title')),
               ],
             ),
             actions: [
               IconButton(
                 icon: const Icon(Icons.save),
                 onPressed: () => _saveCharacter(characterProvider, character),
-                tooltip: 'Sauvegarder la fiche',
+                tooltip: AppLocalizations.trSafe(context,'detail_save_tooltip'),
               ),
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert),
                 onSelected: (value) => _handleMenuAction(value, characterProvider, character),
                 itemBuilder: (context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'save',
                     child: Row(
                       children: [
-                        Icon(Icons.save, color: AppTheme.medievalGold),
-                        SizedBox(width: 8),
-                        Text('Sauvegarder'),
+                        const Icon(Icons.save, color: AppTheme.medievalGold),
+                        const SizedBox(width: 8),
+                        Text(AppLocalizations.trSafe(context,'detail_save')),
                       ],
                     ),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
+                    value: 'export_omf',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.folder_special, color: AppTheme.medievalGold),
+                        const SizedBox(width: 8),
+                        Text(AppLocalizations.trSafe(context,'detail_export_omf')),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'export_pdf',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.picture_as_pdf, color: AppTheme.medievalGold),
+                        const SizedBox(width: 8),
+                        Text(AppLocalizations.trSafe(context,'detail_export_pdf')),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'export_odt',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.description, color: AppTheme.medievalGold),
+                        const SizedBox(width: 8),
+                        Text(AppLocalizations.trSafe(context,'detail_export_odt')),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
                     value: 'export',
                     child: Row(
                       children: [
-                        Icon(Icons.share, color: AppTheme.medievalGold),
-                        SizedBox(width: 8),
-                        Text('Exporter'),
+                        const Icon(Icons.download, color: AppTheme.medievalGold),
+                        const SizedBox(width: 8),
+                        Text(AppLocalizations.trSafe(context,'detail_export_json')),
                       ],
                     ),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text('Supprimer'),
+                        const Icon(Icons.delete, color: Colors.red),
+                        const SizedBox(width: 8),
+                        Text(AppLocalizations.trSafe(context,'detail_delete')),
                       ],
                     ),
                   ),
@@ -213,7 +244,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
             ),
             textAlign: TextAlign.center,
             decoration: InputDecoration(
-              hintText: 'Nom du personnage',
+              hintText: AppLocalizations.trSafe(context, 'name_hint'),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: AppTheme.medievalBronze, width: 2),
@@ -240,7 +271,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                   size: 18,
                   color: AppTheme.medievalGold,
                 ),
-                label: Text(character.isNPC ? 'PNJ' : 'Joueur'),
+                label: Text(character.isNPC ? AppLocalizations.trSafe(context,'npc') : AppLocalizations.trSafe(context,'player')),
                 backgroundColor: AppTheme.medievalGold.withValues(alpha: 0.2),
               ),
               Chip(
@@ -284,7 +315,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                   Icon(Icons.info, color: AppTheme.medievalGold, size: 24),
                   const SizedBox(width: 8),
                   Text(
-                    'Informations',
+                    AppLocalizations.trSafe(context,'informations'),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppTheme.medievalDarkBrown,
@@ -295,7 +326,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Expanded(child: Text('Points de Fatigue', style: TextStyle(fontWeight: FontWeight.w500, color: AppTheme.medievalDarkBrown))),
+                  Expanded(child: Text(AppLocalizations.trSafe(context, 'fatigue_points'), style: TextStyle(fontWeight: FontWeight.w500, color: AppTheme.medievalDarkBrown))),
                   SizedBox(
                     width: 80,
                     child: TextField(
@@ -318,7 +349,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Expanded(child: Text('Points de Pouvoir', style: TextStyle(fontWeight: FontWeight.w500, color: AppTheme.medievalDarkBrown))),
+                  Expanded(child: Text(AppLocalizations.trSafe(context,'power_points'), style: TextStyle(fontWeight: FontWeight.w500, color: AppTheme.medievalDarkBrown))),
                   SizedBox(
                     width: 80,
                     child: TextField(
@@ -351,7 +382,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                 controller: _motivationController,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  hintText: 'Motivation du personnage',
+                  hintText: AppLocalizations.trSafe(context,'motivation_hint'),
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -372,47 +403,6 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppTheme.medievalDarkBrown,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.medievalGold.withValues(alpha: 0.3),
-                  AppTheme.medievalBronze.withValues(alpha: 0.2),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: AppTheme.medievalGold.withValues(alpha: 0.5),
-                width: 1.5,
-              ),
-            ),
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: AppTheme.medievalDarkBrown,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -528,7 +518,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Talents',
+                      AppLocalizations.trSafe(context,'talents'),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: AppTheme.medievalDarkBrown,
@@ -542,14 +532,14 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                         final newList = CharacterGeneratorService.generateRandomTalents(gameSystem, isNPC: character.isNPC);
                         characterProvider.updateCharacter(character.copyWith(talents: newList));
                       },
-                      tooltip: 'Tirer au sort (tous)',
+                      tooltip: AppLocalizations.trSafe(context,'roll_all'),
                     ),
                     IconButton(
                       icon: const Icon(Icons.add, size: 20),
                       onPressed: () {
                         final name = gameSystem.availableTalents.isNotEmpty
                             ? CharacterGeneratorService.pickRandomTalent(gameSystem)
-                            : 'Nouveau talent';
+                            : AppLocalizations.trSafe(context, 'new_talent');
                         characterProvider.updateCharacter(character.copyWith(
                           talents: [...character.talents, name],
                         ));
@@ -562,7 +552,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
               const SizedBox(height: 16),
               if (character.talents.isEmpty)
                 Text(
-                  'Aucun talent',
+                  AppLocalizations.trSafe(context, 'no_talents'),
                   style: TextStyle(
                     fontStyle: FontStyle.italic,
                     color: AppTheme.medievalBronze,
@@ -612,14 +602,14 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                                     characterProvider.updateCharacter(character.copyWith(talents: newList));
                                   }
                                 : null,
-                            tooltip: 'Tirer au sort',
+                            tooltip: AppLocalizations.trSafe(context,'roll_draw'),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                           ),
                           IconButton(
                             icon: const Icon(Icons.edit, size: 16),
                             onPressed: () => _showEditTalentDialog(character, characterProvider, index, talent),
-                            tooltip: 'Modifier',
+                            tooltip: AppLocalizations.trSafe(context, 'modify'),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                           ),
@@ -629,7 +619,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                               final newList = List<String>.from(character.talents)..removeAt(index);
                               characterProvider.updateCharacter(character.copyWith(talents: newList));
                             },
-                            tooltip: 'Supprimer',
+                            tooltip: AppLocalizations.trSafe(context,'detail_delete'),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                           ),
@@ -650,20 +640,20 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Modifier le talent'),
+        title: Text(AppLocalizations.trSafe(context,'edit_talent')),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(labelText: 'Nom du talent'),
+          decoration: InputDecoration(labelText: AppLocalizations.trSafe(context,'talent_name')),
           autofocus: true,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.trSafe(ctx, 'cancel'))),
           FilledButton(
             onPressed: () {
               final v = controller.text.trim();
               if (v.isNotEmpty) Navigator.pop(ctx, true);
             },
-            child: const Text('Enregistrer'),
+            child: Text(AppLocalizations.trSafe(context,'dialog_save')),
           ),
         ],
       ),
@@ -701,7 +691,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Pouvoirs',
+                      AppLocalizations.trSafe(context,'powers'),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: AppTheme.medievalDarkBrown,
@@ -715,7 +705,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                         final newList = CharacterGeneratorService.generateRandomPowers(gameSystem, character.type, isNPC: character.isNPC);
                         characterProvider.updateCharacter(character.copyWith(powers: newList));
                       },
-                      tooltip: 'Tirer au sort (tous)',
+                      tooltip: AppLocalizations.trSafe(context,'roll_all'),
                     ),
                     IconButton(
                       icon: const Icon(Icons.add, size: 20),
@@ -768,7 +758,9 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                power.name,
+                                power.nameKey != null
+                                    ? AppLocalizations.trSafe(context, power.nameKey!)
+                                    : power.name,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
@@ -799,14 +791,14 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                                   final newList = List<Power>.from(character.powers)..[index] = p;
                                   characterProvider.updateCharacter(character.copyWith(powers: newList));
                                 },
-                                tooltip: 'Tirer au sort',
+                                tooltip: AppLocalizations.trSafe(context,'roll_draw'),
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                               ),
                               IconButton(
                                 icon: const Icon(Icons.edit, size: 16),
                                 onPressed: () => _showEditPowerDialog(character, characterProvider, index, power),
-                                tooltip: 'Modifier',
+                                tooltip: AppLocalizations.trSafe(context, 'modify'),
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                               ),
@@ -816,17 +808,19 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                                   final newList = List<Power>.from(character.powers)..removeAt(index);
                                   characterProvider.updateCharacter(character.copyWith(powers: newList));
                                 },
-                                tooltip: 'Supprimer',
+                                tooltip: AppLocalizations.trSafe(context,'detail_delete'),
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                               ),
                             ],
                           ],
                         ),
-                        if (power.description.isNotEmpty) ...[
+                        if (power.descriptionKey != null || power.description.isNotEmpty) ...[
                           const SizedBox(height: 8),
                           Text(
-                            power.description,
+                            power.descriptionKey != null
+                                ? AppLocalizations.trSafe(context, power.descriptionKey!)
+                                : power.description,
                             style: TextStyle(
                               fontSize: 14,
                               color: AppTheme.medievalDarkBrown.withValues(alpha: 0.8),
@@ -852,40 +846,40 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Modifier le pouvoir'),
+        title: Text(AppLocalizations.trSafe(context,'edit_power')),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'Nom'),
+                decoration: InputDecoration(labelText: AppLocalizations.trSafe(context,'power_name')),
                 autofocus: true,
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: costCtrl,
-                decoration: const InputDecoration(labelText: 'Coût (PP)'),
+                decoration: InputDecoration(labelText: AppLocalizations.trSafe(context, 'power_cost')),
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: descCtrl,
-                decoration: const InputDecoration(labelText: 'Description'),
+                decoration: InputDecoration(labelText: AppLocalizations.trSafe(context,'power_description')),
                 maxLines: 2,
               ),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.trSafe(ctx, 'cancel'))),
           FilledButton(
             onPressed: () {
               final name = nameCtrl.text.trim();
               final cost = int.tryParse(costCtrl.text);
               if (name.isNotEmpty && cost != null && cost >= 0) Navigator.pop(ctx, true);
             },
-            child: const Text('Enregistrer'),
+            child: Text(AppLocalizations.trSafe(context,'dialog_save')),
           ),
         ],
       ),
@@ -898,6 +892,8 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
         name: nameCtrl.text.trim(),
         costPP: int.tryParse(costCtrl.text) ?? power.costPP,
         description: descCtrl.text.trim(),
+        nameKey: null,
+        descriptionKey: null,
       );
       final newList = List<Power>.from(character.powers)..[index] = p;
       characterProvider.updateCharacter(character.copyWith(powers: newList));
@@ -931,7 +927,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Compétences',
+                      AppLocalizations.trSafe(context,'competences'),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: AppTheme.medievalDarkBrown,
@@ -945,7 +941,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                         final newMap = CharacterGeneratorService.generateRandomCompetences(gameSystem, isNPC: character.isNPC);
                         characterProvider.updateCharacter(character.copyWith(competences: newMap));
                       },
-                      tooltip: 'Tirer au sort (toutes)',
+                      tooltip: AppLocalizations.trSafe(context, 'roll_all'),
                     ),
                 ],
               ),
@@ -992,7 +988,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                             ),
                           ),
                           child: Text(
-                            'Niveau $level',
+                            '${AppLocalizations.trSafe(context,'level_label')} $level',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: AppTheme.medievalDarkBrown,
@@ -1007,14 +1003,14 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                               final newMap = Map<String, int>.from(character.competences)..remove(compName)..[newEntry.key] = newEntry.value;
                               characterProvider.updateCharacter(character.copyWith(competences: newMap));
                             },
-                            tooltip: 'Tirer au sort',
+                            tooltip: AppLocalizations.trSafe(context,'roll_draw'),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                           ),
                           IconButton(
                             icon: const Icon(Icons.edit, size: 16),
                             onPressed: () => _showEditCompetenceDialog(character, characterProvider, compName, level),
-                            tooltip: 'Modifier',
+                            tooltip: AppLocalizations.trSafe(context, 'modify'),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                           ),
@@ -1024,7 +1020,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                               final newMap = Map<String, int>.from(character.competences)..remove(compName);
                               characterProvider.updateCharacter(character.copyWith(competences: newMap));
                             },
-                            tooltip: 'Supprimer',
+                            tooltip: AppLocalizations.trSafe(context,'detail_delete'),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                           ),
@@ -1046,32 +1042,32 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Modifier la compétence'),
+        title: Text(AppLocalizations.trSafe(context, 'edit_competence')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameCtrl,
-              decoration: const InputDecoration(labelText: 'Nom'),
+              decoration: InputDecoration(labelText: AppLocalizations.trSafe(context, 'competence_name')),
               autofocus: true,
             ),
             const SizedBox(height: 12),
             TextField(
               controller: levelCtrl,
-              decoration: const InputDecoration(labelText: 'Niveau'),
+              decoration: InputDecoration(labelText: AppLocalizations.trSafe(context, 'level_label')),
               keyboardType: TextInputType.number,
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.trSafe(ctx, 'cancel'))),
           FilledButton(
             onPressed: () {
               final name = nameCtrl.text.trim();
               final lvl = int.tryParse(levelCtrl.text);
               if (name.isNotEmpty && lvl != null && lvl >= 1) Navigator.pop(ctx, true);
             },
-            child: const Text('Enregistrer'),
+            child: Text(AppLocalizations.trSafe(context,'dialog_save')),
           ),
         ],
       ),
@@ -1112,7 +1108,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Équipement',
+                      AppLocalizations.trSafe(context,'equipment'),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: AppTheme.medievalDarkBrown,
@@ -1126,7 +1122,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                         final newList = CharacterGeneratorService.generateRandomEquipmentList(character.type, character.gameId);
                         characterProvider.updateCharacter(character.copyWith(equipment: newList));
                       },
-                      tooltip: 'Tirer au sort (tous)',
+                      tooltip: AppLocalizations.trSafe(context,'roll_all'),
                     ),
                     IconButton(
                       icon: const Icon(Icons.add, size: 20),
@@ -1144,7 +1140,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
               const SizedBox(height: 16),
               if (character.equipment.isEmpty)
                 Text(
-                  'Aucun équipement',
+                  AppLocalizations.trSafe(context, 'no_equipment'),
                   style: TextStyle(
                     fontStyle: FontStyle.italic,
                     color: AppTheme.medievalBronze,
@@ -1193,14 +1189,14 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                                 final newList = List<String>.from(character.equipment)..[index] = newItem;
                                 characterProvider.updateCharacter(character.copyWith(equipment: newList));
                               },
-                              tooltip: 'Tirer au sort',
+                              tooltip: AppLocalizations.trSafe(context,'roll_draw'),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                             ),
                             IconButton(
                               icon: const Icon(Icons.edit, size: 16),
                               onPressed: () => _showEditEquipmentDialog(character, characterProvider, index, item),
-                              tooltip: 'Modifier',
+                              tooltip: AppLocalizations.trSafe(context, 'modify'),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                             ),
@@ -1210,7 +1206,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                                 final newList = List<String>.from(character.equipment)..removeAt(index);
                                 characterProvider.updateCharacter(character.copyWith(equipment: newList));
                               },
-                              tooltip: 'Supprimer',
+                              tooltip: AppLocalizations.trSafe(context,'detail_delete'),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                             ),
@@ -1232,19 +1228,19 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Modifier l\'équipement'),
+        title: Text(AppLocalizations.trSafe(context,'edit_equipment')),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(labelText: 'Objet'),
+          decoration: InputDecoration(labelText: AppLocalizations.trSafe(context,'equipment_item')),
           autofocus: true,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.trSafe(ctx, 'cancel'))),
           FilledButton(
             onPressed: () {
               if (controller.text.trim().isNotEmpty) Navigator.pop(ctx, true);
             },
-            child: const Text('Enregistrer'),
+            child: Text(AppLocalizations.trSafe(context,'dialog_save')),
           ),
         ],
       ),
@@ -1279,7 +1275,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                   Icon(Icons.casino, color: AppTheme.medievalGold, size: 24),
                   const SizedBox(width: 8),
                   Text(
-                    'Lanceur de dés',
+                    AppLocalizations.trSafe(context,'dice_roller_title'),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppTheme.medievalDarkBrown,
@@ -1307,8 +1303,8 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
     characterProvider.saveCharacter(updated);
     StorageService.saveCharacter(updated);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Personnage sauvegardé'),
+      SnackBar(
+        content: Text(AppLocalizations.trSafe(context, 'detail_saved_snackbar')),
         backgroundColor: AppTheme.medievalGold,
       ),
     );
@@ -1319,6 +1315,15 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
       case 'save':
         _saveCharacter(characterProvider, character);
         break;
+      case 'export_omf':
+        _exportCharacterOmf(character);
+        break;
+      case 'export_pdf':
+        _exportCharacterPdf(character);
+        break;
+      case 'export_odt':
+        _exportCharacterOdt(character);
+        break;
       case 'export':
         _exportCharacter(character);
         break;
@@ -1328,14 +1333,18 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
     }
   }
 
-  Future<void> _exportCharacter(Character character) async {
+  Future<void> _exportCharacterOmf(Character character) async {
     try {
-      final filePath = await StorageService.exportCharacterToFile(character);
-      await Share.shareXFiles([XFile(filePath)], text: 'Personnage ${character.name}');
+      final filePath = await StorageService.exportCharacterToOmf(character);
+      await SharePlus.instance.share(ShareParams(
+        text: AppLocalizations.trSafe(context, 'detail_share_text_omf', {'name': character.name}),
+        subject: AppLocalizations.trSafe(context, 'detail_share_subject_omf', {'name': character.name}),
+        files: [XFile(filePath)],
+      ));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Personnage exporté'),
+        SnackBar(
+          content: Text(AppLocalizations.trSafe(context, 'detail_omf_ready')),
           backgroundColor: AppTheme.medievalGold,
         ),
       );
@@ -1343,7 +1352,85 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Erreur lors de l\'export: $e'),
+          content: Text('${AppLocalizations.trSafe(context, 'omf_export_error')}: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _exportCharacterPdf(Character character) async {
+    try {
+      final filePath = await StorageService.exportCharacterToPdf(character, Localizations.localeOf(context));
+      await SharePlus.instance.share(ShareParams(
+        text: AppLocalizations.trSafe(context, 'sheet_title_pdf', {'name': character.name}),
+        subject: AppLocalizations.trSafe(context, 'detail_share_subject', {'name': character.name}),
+        files: [XFile(filePath)],
+      ));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.trSafe(context,'detail_pdf_ready')),
+          backgroundColor: AppTheme.medievalGold,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${AppLocalizations.trSafe(context, 'pdf_export_error')}: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _exportCharacterOdt(Character character) async {
+    try {
+      final filePath = await StorageService.exportCharacterToOdt(character, Localizations.localeOf(context));
+      await SharePlus.instance.share(ShareParams(
+        text: AppLocalizations.trSafe(context, 'detail_share_text_odt', {'name': character.name}),
+        subject: AppLocalizations.trSafe(context, 'detail_share_subject_odt', {'name': character.name}),
+        files: [XFile(filePath)],
+      ));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.trSafe(context,'detail_odt_ready')),
+          backgroundColor: AppTheme.medievalGold,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${AppLocalizations.trSafe(context, 'odt_export_error')}: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _exportCharacter(Character character) async {
+    try {
+      final filePath = await StorageService.exportCharacterToFile(character);
+      await SharePlus.instance.share(ShareParams(
+        text: AppLocalizations.trSafe(context, 'detail_share_text_json', {'name': character.name}),
+        subject: AppLocalizations.trSafe(context, 'detail_share_subject_json', {'name': character.name}),
+        files: [XFile(filePath)],
+      ));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.trSafe(context,'detail_json_ready')),
+          backgroundColor: AppTheme.medievalGold,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${AppLocalizations.trSafe(context,'export_error')}: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -1354,12 +1441,12 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Supprimer le personnage'),
-        content: Text('Êtes-vous sûr de vouloir supprimer ${character.name} ?'),
+        title: Text(AppLocalizations.trSafe(context,'detail_delete_confirm')),
+        content: Text(AppLocalizations.trSafe(context,'detail_delete_confirm_msg', {'name': character.name})),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
+            child: Text(AppLocalizations.trSafe(context,'cancel')),
           ),
           TextButton(
             onPressed: () {
@@ -1368,13 +1455,13 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
               Navigator.pop(context);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Personnage supprimé'),
+                SnackBar(
+                  content: Text(AppLocalizations.trSafe(context,'character_deleted_snackbar')),
                   backgroundColor: AppTheme.medievalGold,
                 ),
               );
             },
-            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+            child: Text(AppLocalizations.trSafe(context,'detail_delete'), style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),

@@ -7,6 +7,7 @@ import '../providers/character_provider.dart';
 import '../models/character.dart';
 import '../services/character_generator_service.dart';
 import '../services/name_generator_service.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../utils/stat_descriptions.dart';
 import '../utils/roll_d6.dart';
@@ -92,40 +93,37 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
     // Ajouter d'autres limitations selon les règles
   ];
 
-  /// Descriptions des grades INS/MV pour les bulles explicatives.
-  static const Map<String, String> _gradeDescriptions = {
-    '0': 'Grade 0 — Personnage de base, le plus faible dans la hiérarchie. Serviteur ou humain sans rang particulier.',
-    '1': 'Grade 1 — Premier échelon au-dessus de la base. Un peu plus d\'influence et de responsabilités.',
-    '2': 'Grade 2 — Grade intermédiaire. Responsabilités accrues, souvent chef de petit groupe.',
-    '3': 'Grade 3 — Haut grade, proche du Supérieur. Grande influence et pouvoirs renforcés.',
-    'AVATAR': 'Archange (anges) / Avatar (démons) — Forme la plus puissante : incarnation ou émanation directe du Supérieur. Réservé aux personnages majeurs.',
-    'ARCHANGE': 'Archange — Pour les anges : forme la plus élevée, proche de la divinité. Pour les démons, voir Avatar.',
-  };
+  /// Clé de traduction pour la bulle d'aide du grade.
+  static String _gradeDescKey(String value) {
+    if (value == 'AVATAR') return 'grade_desc_avatar';
+    if (value == 'ARCHANGE') return 'grade_desc_archange';
+    return 'grade_desc_$value';
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Row(
+        title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.people, color: AppTheme.medievalGold),
-            SizedBox(width: 8),
-            Text('Créer PNJ'),
+            const Icon(Icons.people, color: AppTheme.medievalGold),
+            const SizedBox(width: 8),
+            Text(AppLocalizations.trSafe(context, 'create_npc_short')),
           ],
         ),
         actions: [
           TextButton.icon(
             onPressed: _generateFullRandomNPC,
             icon: const Icon(Icons.casino, color: AppTheme.medievalGold, size: 20),
-            label: const Text('Tout Aléatoire'),
+            label: Text(AppLocalizations.trSafe(context, 'full_random')),
             style: TextButton.styleFrom(foregroundColor: AppTheme.medievalGold),
           ),
           const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.save, color: AppTheme.medievalGold),
             onPressed: _generateNPC,
-            tooltip: 'Générer le PNJ',
+            tooltip: AppLocalizations.trSafe(context, 'generate_npc'),
           ),
         ],
       ),
@@ -183,8 +181,8 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'TYPE DE PERSONNAGE',
+              Text(
+                AppLocalizations.trSafe(context, 'type_person_label'),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -192,8 +190,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                 ),
               ),
               _buildSectionDescription(
-                'Ange = serviteur du Ciel (Magna Veritas). Démon = serviteur de l\'Enfer (In Nomine Satanis). '
-                'Humain = sans allégeance surnaturelle. Autre = sous-types spéciaux (incube, mort-vivant, familier…).',
+                AppLocalizations.trSafe(context, 'type_section_help'),
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -202,7 +199,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                 children: [
                   ...['ANGE', 'DEMON', 'HUMAIN', 'AUTRE'].map((type) {
                     return _buildSelectableButton(
-                      label: type == 'ANGE' ? 'Anges' : type == 'DEMON' ? 'Démons' : type == 'HUMAIN' ? 'Humains' : 'Autre',
+                      label: type == 'ANGE' ? AppLocalizations.trSafe(context, 'type_angels') : type == 'DEMON' ? AppLocalizations.trSafe(context, 'type_demons') : type == 'HUMAIN' ? AppLocalizations.trSafe(context, 'type_humans') : AppLocalizations.trSafe(context, 'type_other'),
                       isSelected: _selectedType == type,
                       onTap: () => setState(() {
                         _selectedType = type;
@@ -213,7 +210,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                     );
                   }),
                   _buildSelectableButton(
-                    label: 'Tirage au sort',
+                    label: AppLocalizations.trSafe(context, 'draw_random'),
                     isSelected: false,
                     onTap: () {
                       final mainTypes = ['ANGE', 'DEMON', 'HUMAIN', 'AUTRE'];
@@ -229,14 +226,17 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                 ],
               ),
               if (_selectedType != null)
-                Consumer<GameProvider>(
-                  builder: (context, gameProvider, _) {
-                    final game = gameProvider.currentGame;
-                    if (game == null) return const SizedBox();
-                    final typeKey = _selectedType == 'ANGE' ? 'Ange' : _selectedType == 'DEMON' ? 'Démon' : 'Humain';
-                    final desc = game.characterTypeDescriptions[typeKey];
-                    if (desc == null) return const SizedBox();
-                    return _buildSectionDescription(desc);
+                Builder(
+                  builder: (context) {
+                    final descKey = _selectedType == 'ANGE'
+                        ? 'type_desc_angel'
+                        : _selectedType == 'DEMON'
+                            ? 'type_desc_demon'
+                            : _selectedType == 'HUMAIN'
+                                ? 'type_desc_human'
+                                : null;
+                    if (descKey == null) return const SizedBox();
+                    return _buildSectionDescription(AppLocalizations.trSafe(context, descKey));
                   },
                 ),
             ],
@@ -282,8 +282,8 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
           ),
         ),
         child: SwitchListTile(
-          title: const Text('PNJ amoindri'),
-          subtitle: const Text('Désactiver = PNJ avec caractéristiques de joueur'),
+          title: Text(AppLocalizations.trSafe(context, 'npc_diminished')),
+          subtitle: Text(AppLocalizations.trSafe(context, 'npc_subtitle_diminished')),
           value: _npcDiminished,
           onChanged: (value) => setState(() => _npcDiminished = value),
           activeThumbColor: AppTheme.medievalGold,
@@ -309,17 +309,16 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'SOUS-TYPE (AUTRE)',
-                style: TextStyle(
+              Text(
+                AppLocalizations.trSafe(context, 'sub_type_other'),
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                   color: AppTheme.medievalDarkBrown,
                 ),
               ),
               _buildSectionDescription(
-                'Personnalisez la catégorie « Autre » : choisissez un sous-type (Serviteur de Dieu, Incube, Mort-vivant…) '
-                'ou utilisez « Tirage au sort » pour en sélectionner un aléatoirement.',
+                AppLocalizations.trSafe(context, 'other_section_help'),
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -334,14 +333,14 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                     );
                   }),
                   _buildSelectableButton(
-                    label: 'Tirage au sort',
-                    isSelected: false,
-                    onTap: () {
-                      setState(() {
-                        _selectedSubType = _otherSubTypes[_random.nextInt(_otherSubTypes.length)];
-                      });
-                    },
-                  ),
+                      label: AppLocalizations.trSafe(context, 'draw_random'),
+                      isSelected: false,
+                      onTap: () {
+                        setState(() {
+                          _selectedSubType = _otherSubTypes[_random.nextInt(_otherSubTypes.length)];
+                        });
+                      },
+                    ),
                 ],
               ),
             ],
@@ -351,14 +350,15 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
     );
   }
 
+  static const _gradeOptionKeys = [
+    ('0', 'grade_0'),
+    ('1', 'grade_1'),
+    ('2', 'grade_2'),
+    ('3', 'grade_3'),
+    ('AVATAR', 'grade_avatar'),
+  ];
+
   Widget _buildGradeSelector() {
-    const gradeOptions = [
-      ('0', 'Grade 0'),
-      ('1', 'Grade 1'),
-      ('2', 'Grade 2'),
-      ('3', 'Grade 3'),
-      ('AVATAR', 'Archange (avatar)'),
-    ];
     return Card(
       child: Container(
         decoration: BoxDecoration(
@@ -375,34 +375,33 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'GRADE',
-                style: TextStyle(
+              Text(
+                AppLocalizations.trSafe(context, 'grade_label'),
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                   color: AppTheme.medievalDarkBrown,
                 ),
               ),
               _buildSectionDescription(
-                'Niveau hiérarchique : Grade 0 (base) à Grade 3, ou Archange (avatar) pour la forme la plus puissante. '
-                'Passez le curseur sur chaque grade pour plus de détails.',
+                AppLocalizations.trSafe(context, 'grade_section_help'),
               ),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  ...gradeOptions.map((option) {
+                  ..._gradeOptionKeys.map((option) {
                     final value = option.$1;
-                    final label = option.$2;
-                    final tooltip = _gradeDescriptions[value] ?? _gradeDescriptions['AVATAR'];
+                    final labelKey = option.$2;
+                    final tooltip = AppLocalizations.trSafe(context, _gradeDescKey(value));
                     return Tooltip(
-                      message: tooltip ?? '',
+                      message: tooltip,
                       preferBelow: false,
                       child: MouseRegion(
                         cursor: SystemMouseCursors.click,
                         child: _buildSelectableButton(
-                          label: label,
+                          label: AppLocalizations.trSafe(context, labelKey),
                           isSelected: _selectedGrade == value,
                           onTap: () => setState(() => _selectedGrade = value),
                         ),
@@ -410,7 +409,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                     );
                   }),
                   _buildSelectableButton(
-                    label: 'Tirage au sort',
+                    label: AppLocalizations.trSafe(context, 'draw_random'),
                     isSelected: false,
                     onTap: () {
                       const grades = ['0', '1', '2', '3', 'AVATAR'];
@@ -426,17 +425,17 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
     );
   }
 
-  /// Titre / exemple de supérieurs adapté au type (Ange → Blandine…, Démon → Baal…).
+  /// Titre / exemple de supérieurs adapté au type (traduit).
   String _superiorTitleForType(String? type) {
     switch (type) {
       case 'ANGE':
-        return 'Supérieur (Blandine, Michel, etc.)';
+        return AppLocalizations.trSafe(context, 'superior_title_angel');
       case 'DEMON':
-        return 'Supérieur (Baal, Lilith, etc.)';
+        return AppLocalizations.trSafe(context, 'superior_title_demon');
       case 'HUMAIN':
-        return 'Supérieur (Indépendant, etc.)';
+        return AppLocalizations.trSafe(context, 'superior_title_human');
       default:
-        return 'Sélectionner un supérieur';
+        return AppLocalizations.trSafe(context, 'superior_title_generic');
     }
   }
 
@@ -444,15 +443,13 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
   String _superiorDescriptionForType(String? type) {
     switch (type) {
       case 'ANGE':
-        return 'Votre Archange (ex. Blandine, Michel, Dominique…). Détermine vos pouvoirs et votre rôle en jeu. '
-            'Chaque supérieur a des domaines et des capacités spécifiques.';
+        return AppLocalizations.trSafe(context, 'superior_desc_angel');
       case 'DEMON':
-        return 'Votre Prince démoniaque (ex. Baal, Lilith, Mammon…). Détermine vos pouvoirs et votre rôle en jeu. '
-            'Chaque supérieur a des domaines et des capacités spécifiques.';
+        return AppLocalizations.trSafe(context, 'superior_desc_demon');
       case 'HUMAIN':
-        return 'Votre orientation (Indépendant, Rechercheur, Croyant…). Détermine vos affinités et votre rôle en jeu.';
+        return AppLocalizations.trSafe(context, 'superior_desc_human');
       default:
-        return 'Votre Archange (anges) ou Prince démoniaque (démons). Détermine vos pouvoirs et votre rôle en jeu.';
+        return AppLocalizations.trSafe(context, 'superior_desc_generic');
     }
   }
 
@@ -492,7 +489,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                   ),
                   const Spacer(),
                   _buildSelectableButton(
-                    label: 'Tirage au sort',
+                    label: AppLocalizations.trSafe(context, 'draw_random'),
                     isSelected: false,
                     onTap: () {
                       if (superiors.isNotEmpty) {
@@ -508,7 +505,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
               const SizedBox(height: 12),
               ...superiors.take(10).map((superior) {
                 return RadioListTile<String>(
-                  title: Text(superior),
+                  title: Text(AppLocalizations.trSuperiorName(context, superior)),
                   value: superior,
                   groupValue: _selectedSuperior,
                   onChanged: (value) => setState(() => _selectedSuperior = value),
@@ -521,7 +518,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                     // Afficher tous les supérieurs dans un dialogue
                     _showAllSuperiors(superiors);
                   },
-                  child: Text('Voir tous (${superiors.length})'),
+                  child: Text(AppLocalizations.trSafe(context, 'see_all_count', {'count': '${superiors.length}'})),
                 ),
             ],
           ),
@@ -533,12 +530,12 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
   String _gradeDisplayLabel(String? value) {
     if (value == null) return '—';
     switch (value) {
-      case '0': return 'Grade 0';
-      case '1': return 'Grade 1';
-      case '2': return 'Grade 2';
-      case '3': return 'Grade 3';
-      case 'AVATAR': return 'Archange (avatar)';
-      case 'ARCHANGE': return 'Archange (avatar)';
+      case '0': return AppLocalizations.trSafe(context, 'grade_0');
+      case '1': return AppLocalizations.trSafe(context, 'grade_1');
+      case '2': return AppLocalizations.trSafe(context, 'grade_2');
+      case '3': return AppLocalizations.trSafe(context, 'grade_3');
+      case 'AVATAR': return AppLocalizations.trSafe(context, 'grade_avatar');
+      case 'ARCHANGE': return AppLocalizations.trSafe(context, 'grade_avatar');
       default: return value;
     }
   }
@@ -546,10 +543,10 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
   String _typeDisplayLabel(String? type) {
     if (type == null) return '—';
     switch (type) {
-      case 'ANGE': return 'Anges';
-      case 'DEMON': return 'Démons';
-      case 'HUMAIN': return 'Humains';
-      case 'AUTRE': return _selectedSubType != null ? 'Autre ($_selectedSubType)' : 'Autre';
+      case 'ANGE': return AppLocalizations.trSafe(context, 'type_angels');
+      case 'DEMON': return AppLocalizations.trSafe(context, 'type_demons');
+      case 'HUMAIN': return AppLocalizations.trSafe(context, 'type_humans');
+      case 'AUTRE': return _selectedSubType != null ? AppLocalizations.trSafe(context, 'other_with_subtype', {'subtype': _selectedSubType!}) : AppLocalizations.trSafe(context, 'type_other');
       default: return type;
     }
   }
@@ -557,7 +554,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
   Widget _buildPreviewCard() {
     final gameProvider = Provider.of<GameProvider>(context);
     final game = gameProvider.currentGame;
-    final edition = game?.getEdition(gameProvider.currentEditionId ?? (game?.editions.isEmpty ?? true ? '' : game!.editions.first.id));
+    final edition = game?.getEdition(gameProvider.currentEditionId ?? (game.editions.isNotEmpty ? game.editions.first.id : ''));
     final statNames = edition?.statNames ?? ['Force', 'Volonté', 'Agilité', 'Perception', 'Présence', 'Apparence'];
     final caracs = statNames.map((n) => _characteristics[n] ?? 0).where((v) => v > 0).length;
     final powersCount = _powerSelections.values.whereType<String>().where((s) => s.isNotEmpty).length;
@@ -584,8 +581,8 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                   children: [
                     Icon(Icons.preview, color: AppTheme.medievalGold, size: 24),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Aperçu de la fiche',
+                    Text(
+                      AppLocalizations.trSafe(context, 'preview_sheet_title'),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -594,7 +591,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                     ),
                     const Spacer(),
                     Text(
-                      'Tout modifier',
+                      AppLocalizations.trSafe(context, 'edit_all'),
                       style: TextStyle(fontSize: 12, color: AppTheme.medievalGold, fontWeight: FontWeight.w500),
                     ),
                     const Icon(Icons.arrow_forward, size: 16, color: AppTheme.medievalGold),
@@ -605,12 +602,12 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _previewChip('Type', _selectedType ?? '—'),
-                    _previewChip('Grade', _selectedGrade ?? '—'),
-                    _previewChip('Supérieur', _selectedSuperior ?? '—'),
-                    _previewChip('Caracs', caracs > 0 ? '$caracs/6' : '—'),
-                    _previewChip('Pouvoirs', powersCount > 0 ? '$powersCount' : '—'),
-                    _previewChip('Limitation', _hasLimitation && _limitationName != null ? _limitationName! : 'Non'),
+                    _previewChip(AppLocalizations.trSafe(context, 'preview_type'), _selectedType ?? '—'),
+                    _previewChip(AppLocalizations.trSafe(context, 'preview_grade'), _selectedGrade ?? '—'),
+                    _previewChip(AppLocalizations.trSafe(context, 'preview_superior'), _selectedSuperior ?? '—'),
+                    _previewChip(AppLocalizations.trSafe(context, 'preview_caracs'), caracs > 0 ? '$caracs/6' : '—'),
+                    _previewChip(AppLocalizations.trSafe(context, 'preview_powers'), powersCount > 0 ? '$powersCount' : '—'),
+                    _previewChip(AppLocalizations.trSafe(context, 'preview_limitation'), _hasLimitation && _limitationName != null ? _limitationName! : AppLocalizations.trSafe(context, 'no')),
                   ],
                 ),
               ],
@@ -632,7 +629,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
   void _showPreviewSheet() {
     final gameProvider = Provider.of<GameProvider>(context);
     final game = gameProvider.currentGame;
-    final edition = game?.getEdition(gameProvider.currentEditionId ?? (game?.editions.isEmpty ?? true ? '' : game!.editions.first.id));
+    final edition = game?.getEdition(gameProvider.currentEditionId ?? (game.editions.isNotEmpty ? game.editions.first.id : ''));
     final statNames = edition?.statNames ?? ['Force', 'Volonté', 'Agilité', 'Perception', 'Présence', 'Apparence'];
     showModalBottomSheet(
       context: context,
@@ -653,7 +650,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                 children: [
                   Icon(Icons.preview, color: AppTheme.medievalGold),
                   const SizedBox(width: 8),
-                  const Text('Mode aperçu – Fiche PNJ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  Text(AppLocalizations.trSafe(context, 'npc_preview'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                   const Spacer(),
                   IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
                 ],
@@ -664,17 +661,17 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  _previewRow('Type', _typeDisplayLabel(_selectedType)),
-                  _previewRow('Grade', _gradeDisplayLabel(_selectedGrade)),
-                  _previewRow('Supérieur', _selectedSuperior ?? 'Non choisi'),
-                  _previewRow('PNJ amoindri', _npcDiminished ? 'Oui' : 'Non'),
+                  _previewRow(AppLocalizations.trSafe(context, 'preview_type'), _typeDisplayLabel(_selectedType)),
+                  _previewRow(AppLocalizations.trSafe(context, 'preview_grade'), _gradeDisplayLabel(_selectedGrade)),
+                  _previewRow(AppLocalizations.trSafe(context, 'preview_superior'), _selectedSuperior != null ? AppLocalizations.trSuperiorName(context, _selectedSuperior!) : AppLocalizations.trSafe(context, 'not_chosen')),
+                  _previewRow(AppLocalizations.trSafe(context, 'npc_diminished'), _npcDiminished ? AppLocalizations.trSafe(context, 'yes') : AppLocalizations.trSafe(context, 'no')),
                   const SizedBox(height: 8),
-                  const Text('Caractéristiques', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ...statNames.map((n) => _previewRow(n, '${_characteristics[n] ?? 0}')),
+                  Text(AppLocalizations.trSafe(context, 'characteristics'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ...statNames.map((n) => _previewRow(StatDescriptions.getTranslatedName(context, n), '${_characteristics[n] ?? 0}')),
                   const SizedBox(height: 8),
-                  const Text('Pouvoirs', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ..._powerSelections.entries.map((e) => _previewRow('Pouvoir ${e.key}', e.value ?? '—')),
-                  _previewRow('Limitation', _hasLimitation && _limitationName != null ? _limitationName! : 'Non'),
+                  Text(AppLocalizations.trSafe(context, 'powers'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ..._powerSelections.entries.map((e) => _previewRow(AppLocalizations.trSafe(context, 'preview_power_n', {'n': e.key.toString()}), e.value ?? '—')),
+                  _previewRow(AppLocalizations.trSafe(context, 'preview_limitation'), _hasLimitation && _limitationName != null ? _limitationName! : AppLocalizations.trSafe(context, 'no')),
                 ],
               ),
             ),
@@ -722,8 +719,8 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                 children: [
                   Row(
                     children: [
-                      const Text(
-                        'SÉLECTIONNER UNE CARAC OU +',
+                      Text(
+                        AppLocalizations.trSafe(context, 'select_carac_or_more'),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -732,7 +729,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                       ),
                       const Spacer(),
                       _buildSelectableButton(
-                        label: 'RANDOM',
+                        label: AppLocalizations.trSafe(context, 'random_label'),
                         isSelected: false,
                         onTap: () {
                           setState(() {
@@ -745,8 +742,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                     ],
                   ),
                   _buildSectionDescription(
-                    'Les 6 caractéristiques du personnage (Force, Volonté, Agilité, etc.). Choisir une valeur de 1 à 6 par ligne. '
-                    'Les noms dépendent de l\'édition choisie à l\'accueil (v1–v3 : Intelligence ; v4 : Rêve ; v5 : Empathie ; v6 : Intuition).',
+                    AppLocalizations.trSafe(context, 'carac_section_help'),
                   ),
                   const SizedBox(height: 12),
                   Table(
@@ -773,12 +769,12 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Tooltip(
-                                  message: StatDescriptions.getOrDefault(statName),
+                                  message: StatDescriptions.getTranslatedDescription(context, statName),
                                   preferBelow: false,
                                   child: MouseRegion(
                                     cursor: SystemMouseCursors.help,
                                     child: Text(
-                                      statName,
+                                      StatDescriptions.getTranslatedName(context, statName),
                                       style: const TextStyle(fontWeight: FontWeight.bold),
                                     ),
                                   ),
@@ -829,8 +825,8 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'SÉLECTIONNER POUVOIR',
+              Text(
+                AppLocalizations.trSafe(context, 'select_power_label'),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -869,7 +865,11 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'POUVOIR $powerNumber ${isSuperior ? '(TABLE SUPÉRIEUR)' : isGeneral ? '(TABLE GÉNÉRALE)' : ''}',
+            isSuperior
+                ? AppLocalizations.trSafe(context, 'power_n_superior', {'n': '$powerNumber'})
+                : isGeneral
+                    ? AppLocalizations.trSafe(context, 'power_n_general', {'n': '$powerNumber'})
+                    : AppLocalizations.trSafe(context, 'select_power_label'),
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 14,
@@ -880,13 +880,13 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
             Row(
               children: [
                 _buildSelectableButton(
-                  label: 'TABLE GÉNÉRALE',
+                  label: AppLocalizations.trSafe(context, 'general_table'),
                   isSelected: !_power2UseSuperior,
                   onTap: () => setState(() => _power2UseSuperior = false),
                 ),
                 const SizedBox(width: 8),
                 _buildSelectableButton(
-                  label: 'TABLE SUPÉRIEUR',
+                  label: AppLocalizations.trSafe(context, 'superior_table'),
                   isSelected: _power2UseSuperior,
                   onTap: () => setState(() => _power2UseSuperior = true),
                 ),
@@ -897,7 +897,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
           Row(
             children: [
               _buildSelectableButton(
-                label: 'RANDOM',
+                label: AppLocalizations.trSafe(context, 'random_label'),
                 isSelected: false,
                 onTap: () {
                   String? result;
@@ -915,7 +915,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
               if (isGeneral) ...[
                 const SizedBox(width: 8),
                 _buildSelectableButton(
-                  label: 'SEMI ALÉATOIRE',
+                  label: AppLocalizations.trSafe(context, 'semi_random'),
                   isSelected: false,
                   onTap: () {
                     final roll = RollD6.roll();
@@ -928,7 +928,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
               ],
               const Spacer(),
               _buildSelectableButton(
-                label: 'CHOISIR',
+                label: AppLocalizations.trSafe(context, 'choose_label'),
                 isSelected: false,
                 onTap: () => _showPowerSelectionDialog(powerNumber, useSuperiorTable),
               ),
@@ -963,17 +963,16 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'LIMITATION',
-                style: TextStyle(
+              Text(
+                AppLocalizations.trSafe(context, 'limitation_label'),
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                   color: AppTheme.medievalDarkBrown,
                 ),
               ),
               _buildSectionDescription(
-                'Handicap optionnel (ex. Accès de colère) qui peut donner des avantages en jeu ou compliquer la partie. '
-                'Non = aucun ; Oui = choisir dans la liste.',
+                AppLocalizations.trSafe(context, 'limitation_section_help'),
               ),
               const SizedBox(height: 12),
               Row(
@@ -984,7 +983,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                     onChanged: (value) => setState(() => _hasLimitation = false),
                     activeColor: AppTheme.medievalGold,
                   ),
-                  const Text('NON'),
+                  Text(AppLocalizations.trSafe(context, 'no')),
                   const SizedBox(width: 24),
                   Radio<bool>(
                     value: true,
@@ -992,7 +991,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
                     onChanged: (value) => setState(() => _hasLimitation = true),
                     activeColor: AppTheme.medievalGold,
                   ),
-                  const Text('OUI'),
+                  Text(AppLocalizations.trSafe(context, 'yes')),
                 ],
               ),
               if (_hasLimitation) ...[
@@ -1046,7 +1045,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Tous les Supérieurs'),
+        title: Text(AppLocalizations.trSafe(context, 'all_superiors')),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.builder(
@@ -1054,7 +1053,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
             itemCount: superiors.length,
             itemBuilder: (context, index) {
               return RadioListTile<String>(
-                title: Text(superiors[index]),
+                title: Text(AppLocalizations.trSuperiorName(context, superiors[index])),
                 value: superiors[index],
                 groupValue: _selectedSuperior,
                 onChanged: (value) {
@@ -1074,7 +1073,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Choisir Pouvoir $powerNumber'),
+        title: Text(AppLocalizations.trSafe(context, 'choose_power', {'n': '$powerNumber'})),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.builder(
@@ -1104,35 +1103,32 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
     final characterProvider = Provider.of<CharacterProvider>(context, listen: false);
     final game = gameProvider.currentGame;
     if (game == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Aucun système de jeu sélectionné')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.trSafe(context, 'no_game_system'))));
       return;
     }
     final editionId = gameProvider.currentEditionId ?? (game.editions.isEmpty ? '' : game.editions.first.id);
     final edition = game.getEdition(editionId);
     if (edition == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Édition non trouvée')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.trSafe(context, 'edition_not_found'))));
       return;
     }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.casino, color: AppTheme.medievalGold),
-            SizedBox(width: 8),
-            Text('PNJ Tout Aléatoire'),
+            const Icon(Icons.casino, color: AppTheme.medievalGold),
+            const SizedBox(width: 8),
+            Text(AppLocalizations.trSafe(context, 'random_npc_full_title')),
           ],
         ),
-        content: const Text(
-          'Créer un PNJ entièrement aléatoire ? Type, grade, supérieur, caractéristiques (jets de dés automatiques), pouvoirs et nom seront tirés au sort. '
-          'Vous pourrez tout modifier sur la fiche ensuite.',
-        ),
+        content: Text(AppLocalizations.trSafe(context, 'random_npc_dialog_message')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.trSafe(ctx, 'cancel'))),
           FilledButton.icon(
             onPressed: () => Navigator.pop(ctx, true),
             icon: const Icon(Icons.casino, size: 20),
-            label: const Text('Générer le PNJ'),
+            label: Text(AppLocalizations.trSafe(context, 'generate_npc')),
             style: FilledButton.styleFrom(backgroundColor: AppTheme.medievalGold, foregroundColor: AppTheme.medievalDarkBrown),
           ),
         ],
@@ -1171,16 +1167,16 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
       characterProvider.setCurrentCharacter(character);
       if (!mounted) return;
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CharacterDetailScreen()));
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PNJ aléatoire créé — modifiez la fiche si besoin.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.trSafe(context, 'random_npc_created'))));
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppLocalizations.trSafe(context, 'error_generic')}: $e')));
     }
   }
 
   void _generateNPC() {
     if (_selectedType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez sélectionner un type de personnage')),
+        SnackBar(content: Text(AppLocalizations.trSafe(context, 'select_type_please'))),
       );
       return;
     }
@@ -1191,7 +1187,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
 
     if (game == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Aucun système de jeu sélectionné')),
+        SnackBar(content: Text(AppLocalizations.trSafe(context, 'no_game_system'))),
       );
       return;
     }
@@ -1236,7 +1232,7 @@ class _NPCCreationScreenState extends State<NPCCreationScreen> {
       character.powers = powersList.map((name) => Power(name: name, costPP: 1)).toList();
     }
     if (_limitationName != null && _limitationName!.isNotEmpty) {
-      character.motivation = (character.motivation.isEmpty ? '' : '${character.motivation}\n') + 'Limitation: $_limitationName';
+      character.motivation = '${character.motivation.isEmpty ? '' : '${character.motivation}\n'}Limitation: $_limitationName';
     }
 
     characterProvider.setCurrentCharacter(character);

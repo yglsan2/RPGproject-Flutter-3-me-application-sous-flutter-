@@ -53,5 +53,15 @@ class PowerTemplate {
   final String name;
   final int costPP;
   final String description;
-  PowerTemplate({required this.name, required this.costPP, this.description = ''});
+  /// Clé l10n pour le nom (si non null, l'UI utilisera la traduction).
+  final String? nameKey;
+  /// Clé l10n pour la description (si non null, l'UI utilisera la traduction).
+  final String? descriptionKey;
+  PowerTemplate({
+    required this.name,
+    required this.costPP,
+    this.description = '',
+    this.nameKey,
+    this.descriptionKey,
+  });
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../utils/stat_descriptions.dart';
 
@@ -66,12 +67,12 @@ class _StatCardState extends State<StatCard> {
         child: ListTile(
           leading: Icon(Icons.star, color: AppTheme.medievalGold, size: 24),
           title: Tooltip(
-            message: StatDescriptions.getOrDefault(widget.statName),
+            message: StatDescriptions.getTranslatedDescription(context, widget.statName),
             preferBelow: false,
             child: MouseRegion(
               cursor: SystemMouseCursors.help,
               child: Text(
-                widget.statName,
+                StatDescriptions.getTranslatedName(context, widget.statName),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: AppTheme.medievalDarkBrown,
@@ -128,7 +129,7 @@ class _StatCardState extends State<StatCard> {
                 child: IconButton(
                   icon: const Icon(Icons.casino, size: 20, color: AppTheme.medievalDarkBrown),
                   onPressed: widget.onRandomize,
-                  tooltip: 'Tirer au sort',
+                  tooltip: AppLocalizations.trSafe(context, 'roll_draw'),
                   padding: const EdgeInsets.all(8),
                 ),
               ),

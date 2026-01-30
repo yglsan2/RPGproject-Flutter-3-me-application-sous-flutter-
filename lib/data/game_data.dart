@@ -2,6 +2,72 @@ import '../models/game_system.dart';
 import '../models/game_edition.dart';
 
 class GameData {
+  /// Map nom de supérieur (INS/MV, français) → clé de traduction (archetype_*_name).
+  static const Map<String, String> superiorNameToL10nKey = {
+    'Blandine (Rêves)': 'archetype_blandine_reves_name',
+    'Ange (Convertis)': 'archetype_ange_convertis_name',
+    'Christophe (Enfants)': 'archetype_christophe_enfants_name',
+    'Dominique (Justice)': 'archetype_dominique_justice_name',
+    'Michel (Guerre)': 'archetype_michel_guerre_name',
+    'Novalis (Fleurs)': 'archetype_novalis_fleurs_name',
+    'Jordi (Animaux)': 'archetype_jordi_animaux_name',
+    'Joseph (Inquisition)': 'archetype_joseph_inquisition_name',
+    'Laurent (Épée)': 'archetype_laurent_epee_name',
+    'Yves (Sources)': 'archetype_yves_sources_name',
+    'Walther (Exorcistes)': 'archetype_walther_exorcistes_name',
+    'Didier (Communication)': 'archetype_didier_communication_name',
+    'Francis (Diplomatie)': 'archetype_francis_diplomatie_name',
+    'Marc (Échanges)': 'archetype_marc_echanges_name',
+    'Janus (Vents)': 'archetype_janus_vents_name',
+    'Jean (Foudre)': 'archetype_jean_foudre_name',
+    'Alain (Cultures)': 'archetype_alain_cultures_name',
+    'Daniel (Pierre)': 'archetype_daniel_pierre_name',
+    'Catherine (Femmes)': 'archetype_catherine_femmes_name',
+    'Gabriel (Feu)': 'archetype_gabriel_feu_name',
+    'Georges (Purification)': 'archetype_georges_purification_name',
+    'Guy (Guérisseurs)': 'archetype_guy_guerisseurs_name',
+    'Jean-Luc (Protecteurs)': 'archetype_jeanluc_protecteurs_name',
+    'Emmanuel (Double Jeu)': 'archetype_emmanuel_double_jeu_name',
+    'Mathias (Confusion)': 'archetype_mathias_confusion_name',
+    'Baal (Guerre)': 'archetype_baal_guerre_name',
+    'Andrealphus (Luxure)': 'archetype_andrealphus_luxure_name',
+    'Sammael (Colère)': 'archetype_sammael_colere_name',
+    'Belial (Envie)': 'archetype_belial_envie_name',
+    'Lilith (Orgueil)': 'archetype_lilith_orgueil_name',
+    'Belphegor (Paresse)': 'archetype_belphegor_paresse_name',
+    'Beelzebub (Gloutonnerie)': 'archetype_beelzebub_gloutonnerie_name',
+    'Mammon (Avarice)': 'archetype_mammon_avarice_name',
+    'Asmodée (Jeu)': 'archetype_asmodee_jeu_name',
+    'Abalam (Folie)': 'archetype_abalam_folie_name',
+    'Andromalius (Jugement)': 'archetype_andromalius_jugement_name',
+    'Baalberith (Administration)': 'archetype_baalberith_administration_name',
+    'Beleth (Cauchemars)': 'archetype_beleth_cauchemars_name',
+    'Bifrons (Destruction)': 'archetype_bifrons_destruction_name',
+    'Caym (Guerre)': 'archetype_caym_guerre_name',
+    'Crocell (Eau)': 'archetype_crocell_eau_name',
+    'Furfur (Tempêtes)': 'archetype_furfur_tempetes_name',
+    'Gaziel (Feu)': 'archetype_gaziel_feu_name',
+    'Haagenti (Transformation)': 'archetype_haagenti_transformation_name',
+    'Malthus (Mort)': 'archetype_malthus_mort_name',
+    'Nisroch (Vengeance)': 'archetype_nisroch_vengeance_name',
+    'Nog (Mensonge)': 'archetype_nog_mensonge_name',
+    'Ouikka (Peur)': 'archetype_ouikka_peur_name',
+    'Shaytan (Tentation)': 'archetype_shaytan_tentation_name',
+    'Uphir (Alchimie)': 'archetype_uphir_alchimie_name',
+    'Indépendant': 'archetype_independant_name',
+    'Rechercheur': 'archetype_rechercheur_name',
+    'Croyant': 'archetype_croyant_name',
+    'Sceptique': 'archetype_sceptique_name',
+    'Médiateur': 'archetype_mediateur_name',
+    'Chasseur': 'archetype_chasseur_name',
+    'Érudit': 'archetype_erudit_name',
+    'Médium': 'archetype_medium_name',
+  };
+
+  /// Retourne la clé l10n pour le nom du supérieur, ou null si inconnu.
+  static String? getSuperiorNameKey(String superiorName) =>
+      superiorNameToL10nKey[superiorName];
+
   static List<GameSystem> getGameSystems() => [
     _getINSMVSystem(),
     _getAgoneSystem(),
@@ -29,23 +95,23 @@ class GameData {
       availableTalents: ['Combat rapproché', 'Combat à distance', 'Discrétion', 'Persuasion', 'Intimidation', 'Connaissances religieuses', 'Connaissances occultes', 'Conduite', 'Informatique', 'Médecine', 'Survie', 'Observation', 'Empathie', 'Résistance mentale', 'Résistance physique', 'Protection'],
       powers: {
         'Ange': [
-          PowerTemplate(name: 'Guérison divine', costPP: 2, description: 'Guérit les blessures'),
-          PowerTemplate(name: 'Bénédiction', costPP: 1, description: 'Protection temporaire'),
-          PowerTemplate(name: 'Vision céleste', costPP: 1, description: 'Voir au-delà du voile'),
-          PowerTemplate(name: 'Parole divine', costPP: 3, description: 'Commande par la voix'),
-          PowerTemplate(name: 'Protection angélique', costPP: 2, description: 'Bouclier de lumière'),
+          PowerTemplate(name: 'Guérison divine', costPP: 2, description: 'Guérit les blessures', nameKey: 'power_guerison_divine_name', descriptionKey: 'power_guerison_divine_desc'),
+          PowerTemplate(name: 'Bénédiction', costPP: 1, description: 'Protection temporaire', nameKey: 'power_benediction_name', descriptionKey: 'power_benediction_desc'),
+          PowerTemplate(name: 'Vision céleste', costPP: 1, description: 'Voir au-delà du voile', nameKey: 'power_vision_celeste_name', descriptionKey: 'power_vision_celeste_desc'),
+          PowerTemplate(name: 'Parole divine', costPP: 3, description: 'Commande par la voix', nameKey: 'power_parole_divine_name', descriptionKey: 'power_parole_divine_desc'),
+          PowerTemplate(name: 'Protection angélique', costPP: 2, description: 'Bouclier de lumière', nameKey: 'power_protection_angelique_name', descriptionKey: 'power_protection_angelique_desc'),
         ],
         'Démon': [
-          PowerTemplate(name: 'Malédiction', costPP: 2, description: 'Inflige malchance'),
-          PowerTemplate(name: 'Tentation', costPP: 1, description: 'Influence les désirs'),
-          PowerTemplate(name: 'Vision infernale', costPP: 1, description: 'Voir les péchés'),
-          PowerTemplate(name: 'Parole infernale', costPP: 3, description: 'Commande par la voix'),
-          PowerTemplate(name: 'Protection démoniaque', costPP: 2, description: "Bouclier d'ombre"),
+          PowerTemplate(name: 'Malédiction', costPP: 2, description: 'Inflige malchance', nameKey: 'power_malediction_name', descriptionKey: 'power_malediction_desc'),
+          PowerTemplate(name: 'Tentation', costPP: 1, description: 'Influence les désirs', nameKey: 'power_tentation_name', descriptionKey: 'power_tentation_desc'),
+          PowerTemplate(name: 'Vision infernale', costPP: 1, description: 'Voir les péchés', nameKey: 'power_vision_infernale_name', descriptionKey: 'power_vision_infernale_desc'),
+          PowerTemplate(name: 'Parole infernale', costPP: 3, description: 'Commande par la voix', nameKey: 'power_parole_infernale_name', descriptionKey: 'power_parole_infernale_desc'),
+          PowerTemplate(name: 'Protection démoniaque', costPP: 2, description: "Bouclier d'ombre", nameKey: 'power_protection_demoniaque_name', descriptionKey: 'power_protection_demoniaque_desc'),
         ],
         'Humain': [
-          PowerTemplate(name: 'Intuition', costPP: 1, description: 'Pressentiment'),
-          PowerTemplate(name: 'Résistance', costPP: 2, description: 'Résistance aux influences'),
-          PowerTemplate(name: 'Détermination', costPP: 1, description: 'Bonus de volonté'),
+          PowerTemplate(name: 'Intuition', costPP: 1, description: 'Pressentiment', nameKey: 'power_intuition_name', descriptionKey: 'power_intuition_desc'),
+          PowerTemplate(name: 'Résistance', costPP: 2, description: 'Résistance aux influences', nameKey: 'power_resistance_name', descriptionKey: 'power_resistance_desc'),
+          PowerTemplate(name: 'Détermination', costPP: 1, description: 'Bonus de volonté', nameKey: 'power_determination_name', descriptionKey: 'power_determination_desc'),
         ],
       },
       competences: ['Discrétion', 'Connaissances religieuses', 'Connaissances occultes', 'Combat', 'Persuasion', 'Observation', 'Survie', 'Médecine', 'Informatique', 'Conduite'],
@@ -64,6 +130,8 @@ class GameData {
         'Blandine (Rêves)': Archetype(
           name: 'Blandine (Rêves)',
           description: 'Ange des Rêves, protecteur des songes et des espoirs. Maître de l\'onirisme et de la communication avec l\'inconscient',
+          nameKey: 'archetype_blandine_reves_name',
+          descriptionKey: 'archetype_blandine_reves_desc',
           stats: {'Force': 2, 'Agilité': 3, 'Intelligence': 5, 'Volonté': 4, 'Perception': 4, 'Présence': 2},
           talents: ['Observation', 'Connaissances occultes', 'Empathie', 'Discrétion'],
           powers: ['Vision céleste', 'Parole divine'],
@@ -71,6 +139,8 @@ class GameData {
         'Ange (Convertis)': Archetype(
           name: 'Ange (Convertis)',
           description: 'Ange de la Conversion, spécialisé dans le retour des âmes vers la lumière. Maître de la persuasion et de la rédemption',
+          nameKey: 'archetype_ange_convertis_name',
+          descriptionKey: 'archetype_ange_convertis_desc',
           stats: {'Force': 2, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 3, 'Perception': 3, 'Présence': 5},
           talents: ['Persuasion', 'Empathie', 'Connaissances religieuses', 'Protection'],
           powers: ['Bénédiction', 'Guérison divine'],
@@ -78,6 +148,8 @@ class GameData {
         'Christophe (Enfants)': Archetype(
           name: 'Christophe (Enfants)',
           description: 'Ange protecteur des Enfants, gardien de l\'innocence et de la pureté. Défenseur des plus vulnérables',
+          nameKey: 'archetype_christophe_enfants_name',
+          descriptionKey: 'archetype_christophe_enfants_desc',
           stats: {'Force': 3, 'Agilité': 4, 'Intelligence': 3, 'Volonté': 4, 'Perception': 4, 'Présence': 3},
           talents: ['Protection', 'Empathie', 'Observation', 'Survie'],
           powers: ['Bénédiction', 'Protection angélique'],
@@ -85,6 +157,8 @@ class GameData {
         'Dominique (Justice)': Archetype(
           name: 'Dominique (Justice)',
           description: 'Ange de la Justice, exécuteur du jugement divin. Implacable dans la recherche de la vérité et de l\'équité',
+          nameKey: 'archetype_dominique_justice_name',
+          descriptionKey: 'archetype_dominique_justice_desc',
           stats: {'Force': 4, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 4, 'Perception': 3, 'Présence': 2},
           talents: ['Combat rapproché', 'Intimidation', 'Connaissances religieuses', 'Observation'],
           powers: ['Parole divine', 'Protection angélique'],
@@ -92,6 +166,8 @@ class GameData {
         'Michel (Guerre)': Archetype(
           name: 'Michel (Guerre)',
           description: 'Ange de la Guerre, chef des armées célestes. Guerrier légendaire et stratège incomparable',
+          nameKey: 'archetype_michel_guerre_name',
+          descriptionKey: 'archetype_michel_guerre_desc',
           stats: {'Force': 5, 'Agilité': 4, 'Intelligence': 2, 'Volonté': 4, 'Perception': 3, 'Présence': 3},
           talents: ['Combat rapproché', 'Combat à distance', 'Intimidation', 'Résistance physique'],
           powers: ['Protection angélique', 'Guérison divine'],
@@ -99,6 +175,8 @@ class GameData {
         'Novalis (Fleurs)': Archetype(
           name: 'Novalis (Fleurs)',
           description: 'Ange des Fleurs, symbole de beauté et de renaissance. Porteur de paix et de réconciliation',
+          nameKey: 'archetype_novalis_fleurs_name',
+          descriptionKey: 'archetype_novalis_fleurs_desc',
           stats: {'Force': 2, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 3, 'Perception': 4, 'Présence': 4},
           talents: ['Empathie', 'Persuasion', 'Survie', 'Observation'],
           powers: ['Bénédiction', 'Guérison divine'],
@@ -106,6 +184,8 @@ class GameData {
         'Jordi (Animaux)': Archetype(
           name: 'Jordi (Animaux)',
           description: 'Ange des Animaux, protecteur de la nature et des créatures sauvages. Maître de la communication avec le monde animal',
+          nameKey: 'archetype_jordi_animaux_name',
+          descriptionKey: 'archetype_jordi_animaux_desc',
           stats: {'Force': 4, 'Agilité': 4, 'Intelligence': 3, 'Volonté': 4, 'Perception': 4, 'Présence': 2},
           talents: ['Survie', 'Observation', 'Protection', 'Empathie'],
           powers: ['Guérison divine', 'Protection angélique'],
@@ -113,6 +193,8 @@ class GameData {
         'Joseph (Inquisition)': Archetype(
           name: 'Joseph (Inquisition)',
           description: 'Ange de l\'Inquisition, chasseur d\'hérétiques et de démons. Inquisiteur implacable et purificateur',
+          nameKey: 'archetype_joseph_inquisition_name',
+          descriptionKey: 'archetype_joseph_inquisition_desc',
           stats: {'Force': 4, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 5, 'Perception': 3, 'Présence': 2},
           talents: ['Intimidation', 'Combat rapproché', 'Connaissances religieuses', 'Observation'],
           powers: ['Parole divine', 'Protection angélique'],
@@ -120,6 +202,8 @@ class GameData {
         'Laurent (Épée)': Archetype(
           name: 'Laurent (Épée)',
           description: 'Ange de l\'Épée, guerrier céleste et défenseur de la foi. Maître du combat et de la stratégie militaire',
+          nameKey: 'archetype_laurent_epee_name',
+          descriptionKey: 'archetype_laurent_epee_desc',
           stats: {'Force': 5, 'Agilité': 4, 'Intelligence': 3, 'Volonté': 4, 'Perception': 3, 'Présence': 2},
           talents: ['Combat rapproché', 'Combat à distance', 'Protection', 'Résistance physique'],
           powers: ['Protection angélique', 'Guérison divine', 'Parole divine'],
@@ -127,6 +211,8 @@ class GameData {
         'Yves (Sources)': Archetype(
           name: 'Yves (Sources)',
           description: 'Ange des Sources, gardien du savoir et de la connaissance. Archiviste divin et maître de l\'information',
+          nameKey: 'archetype_yves_sources_name',
+          descriptionKey: 'archetype_yves_sources_desc',
           stats: {'Force': 2, 'Agilité': 2, 'Intelligence': 5, 'Volonté': 3, 'Perception': 5, 'Présence': 3},
           talents: ['Connaissances religieuses', 'Connaissances occultes', 'Observation', 'Informatique'],
           powers: ['Vision céleste', 'Parole divine'],
@@ -134,6 +220,8 @@ class GameData {
         'Walther (Exorcistes)': Archetype(
           name: 'Walther (Exorcistes)',
           description: 'Ange des Exorcistes, spécialiste de la purification et de l\'expulsion des démons. Maître des rituels de bannissement',
+          nameKey: 'archetype_walther_exorcistes_name',
+          descriptionKey: 'archetype_walther_exorcistes_desc',
           stats: {'Force': 3, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 5, 'Perception': 4, 'Présence': 2},
           talents: ['Connaissances religieuses', 'Connaissances occultes', 'Intimidation', 'Résistance mentale'],
           powers: ['Parole divine', 'Bénédiction', 'Protection angélique'],
@@ -141,6 +229,8 @@ class GameData {
         'Didier (Communication)': Archetype(
           name: 'Didier (Communication)',
           description: 'Ange de la Communication, maître des médias et de l\'information. Porteur de messages et de nouvelles',
+          nameKey: 'archetype_didier_communication_name',
+          descriptionKey: 'archetype_didier_communication_desc',
           stats: {'Force': 2, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 3, 'Perception': 3, 'Présence': 5},
           talents: ['Persuasion', 'Informatique', 'Observation', 'Discrétion'],
           powers: ['Parole divine', 'Vision céleste'],
@@ -148,6 +238,8 @@ class GameData {
         'Francis (Diplomatie)': Archetype(
           name: 'Francis (Diplomatie)',
           description: 'Ange de la Diplomatie, négociateur et médiateur. Spécialiste de la résolution pacifique des conflits',
+          nameKey: 'archetype_francis_diplomatie_name',
+          descriptionKey: 'archetype_francis_diplomatie_desc',
           stats: {'Force': 2, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 3, 'Perception': 3, 'Présence': 5},
           talents: ['Persuasion', 'Empathie', 'Connaissances religieuses', 'Discrétion'],
           powers: ['Bénédiction', 'Parole divine'],
@@ -155,6 +247,8 @@ class GameData {
         'Marc (Échanges)': Archetype(
           name: 'Marc (Échanges)',
           description: 'Ange des Échanges, facilitateur de commerce et de transactions. Maître de la négociation et du troc',
+          nameKey: 'archetype_marc_echanges_name',
+          descriptionKey: 'archetype_marc_echanges_desc',
           stats: {'Force': 2, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 3, 'Perception': 3, 'Présence': 4},
           talents: ['Persuasion', 'Observation', 'Informatique', 'Discrétion'],
           powers: ['Bénédiction', 'Parole divine'],
@@ -162,6 +256,8 @@ class GameData {
         'Janus (Vents)': Archetype(
           name: 'Janus (Vents)',
           description: 'Ange des Vents, maître de la mobilité et du voyage. Porteur de messages et de nouvelles',
+          nameKey: 'archetype_janus_vents_name',
+          descriptionKey: 'archetype_janus_vents_desc',
           stats: {'Force': 3, 'Agilité': 5, 'Intelligence': 3, 'Volonté': 3, 'Perception': 4, 'Présence': 2},
           talents: ['Conduite', 'Survie', 'Observation', 'Discrétion'],
           powers: ['Vision céleste', 'Bénédiction'],
@@ -169,6 +265,8 @@ class GameData {
         'Jean (Foudre)': Archetype(
           name: 'Jean (Foudre)',
           description: 'Ange de la Foudre, maître de l\'énergie et de la puissance. Porteur de la colère divine',
+          nameKey: 'archetype_jean_foudre_name',
+          descriptionKey: 'archetype_jean_foudre_desc',
           stats: {'Force': 4, 'Agilité': 4, 'Intelligence': 3, 'Volonté': 4, 'Perception': 3, 'Présence': 2},
           talents: ['Combat à distance', 'Intimidation', 'Observation', 'Informatique'],
           powers: ['Protection angélique', 'Parole divine'],
@@ -176,6 +274,8 @@ class GameData {
         'Alain (Cultures)': Archetype(
           name: 'Alain (Cultures)',
           description: 'Ange des Cultures, protecteur des arts et des traditions. Gardien du patrimoine et de la diversité',
+          nameKey: 'archetype_alain_cultures_name',
+          descriptionKey: 'archetype_alain_cultures_desc',
           stats: {'Force': 2, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 3, 'Perception': 4, 'Présence': 4},
           talents: ['Connaissances religieuses', 'Empathie', 'Observation', 'Persuasion'],
           powers: ['Bénédiction', 'Guérison divine'],
@@ -183,6 +283,8 @@ class GameData {
         'Daniel (Pierre)': Archetype(
           name: 'Daniel (Pierre)',
           description: 'Ange de la Pierre, maître de la construction et de la stabilité. Gardien des fondations et des structures',
+          nameKey: 'archetype_daniel_pierre_name',
+          descriptionKey: 'archetype_daniel_pierre_desc',
           stats: {'Force': 4, 'Agilité': 2, 'Intelligence': 3, 'Volonté': 4, 'Perception': 3, 'Présence': 2},
           talents: ['Protection', 'Résistance physique', 'Observation', 'Survie'],
           powers: ['Protection angélique', 'Bénédiction'],
@@ -190,6 +292,8 @@ class GameData {
         'Catherine (Femmes)': Archetype(
           name: 'Catherine (Femmes)',
           description: 'Ange des Femmes, protecteur de la féminité et de l\'égalité. Défenseur des droits et de la dignité',
+          nameKey: 'archetype_catherine_femmes_name',
+          descriptionKey: 'archetype_catherine_femmes_desc',
           stats: {'Force': 3, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 4, 'Perception': 3, 'Présence': 4},
           talents: ['Protection', 'Empathie', 'Persuasion', 'Connaissances religieuses'],
           powers: ['Bénédiction', 'Guérison divine'],
@@ -197,6 +301,8 @@ class GameData {
         'Gabriel (Feu)': Archetype(
           name: 'Gabriel (Feu)',
           description: 'Ange du Feu, porteur de lumière et de purification. Maître de la transformation et du renouveau',
+          nameKey: 'archetype_gabriel_feu_name',
+          descriptionKey: 'archetype_gabriel_feu_desc',
           stats: {'Force': 4, 'Agilité': 3, 'Intelligence': 3, 'Volonté': 4, 'Perception': 3, 'Présence': 3},
           talents: ['Combat rapproché', 'Intimidation', 'Protection', 'Résistance physique'],
           powers: ['Protection angélique', 'Guérison divine'],
@@ -204,6 +310,8 @@ class GameData {
         'Georges (Purification)': Archetype(
           name: 'Georges (Purification)',
           description: 'Ange de la Purification, nettoyeur et purificateur. Spécialiste de l\'élimination des souillures',
+          nameKey: 'archetype_georges_purification_name',
+          descriptionKey: 'archetype_georges_purification_desc',
           stats: {'Force': 3, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 4, 'Perception': 4, 'Présence': 2},
           talents: ['Connaissances religieuses', 'Observation', 'Protection', 'Résistance mentale'],
           powers: ['Bénédiction', 'Protection angélique'],
@@ -211,6 +319,8 @@ class GameData {
         'Guy (Guérisseurs)': Archetype(
           name: 'Guy (Guérisseurs)',
           description: 'Ange des Guérisseurs, maître de la médecine et de la réparation. Porteur de soins et de réconfort',
+          nameKey: 'archetype_guy_guerisseurs_name',
+          descriptionKey: 'archetype_guy_guerisseurs_desc',
           stats: {'Force': 2, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 3, 'Perception': 3, 'Présence': 4},
           talents: ['Médecine', 'Empathie', 'Observation', 'Protection'],
           powers: ['Guérison divine', 'Bénédiction'],
@@ -218,6 +328,8 @@ class GameData {
         'Jean-Luc (Protecteurs)': Archetype(
           name: 'Jean-Luc (Protecteurs)',
           description: 'Ange des Protecteurs, gardien et défenseur. Spécialiste de la protection et de la défense',
+          nameKey: 'archetype_jeanluc_protecteurs_name',
+          descriptionKey: 'archetype_jeanluc_protecteurs_desc',
           stats: {'Force': 4, 'Agilité': 3, 'Intelligence': 3, 'Volonté': 4, 'Perception': 4, 'Présence': 3},
           talents: ['Protection', 'Combat rapproché', 'Observation', 'Empathie'],
           powers: ['Protection angélique', 'Bénédiction'],
@@ -225,6 +337,8 @@ class GameData {
         'Emmanuel (Double Jeu)': Archetype(
           name: 'Emmanuel (Double Jeu)',
           description: 'Ange du Double Jeu, maître de l\'infiltration et de l\'espionnage. Spécialiste de la dissimulation',
+          nameKey: 'archetype_emmanuel_double_jeu_name',
+          descriptionKey: 'archetype_emmanuel_double_jeu_desc',
           stats: {'Force': 2, 'Agilité': 4, 'Intelligence': 4, 'Volonté': 3, 'Perception': 4, 'Présence': 3},
           talents: ['Discrétion', 'Observation', 'Persuasion', 'Connaissances occultes'],
           powers: ['Vision céleste', 'Parole divine'],
@@ -232,6 +346,8 @@ class GameData {
         'Mathias (Confusion)': Archetype(
           name: 'Mathias (Confusion)',
           description: 'Ange de la Confusion, maître du chaos et de la désinformation. Spécialiste de la manipulation de l\'information',
+          nameKey: 'archetype_mathias_confusion_name',
+          descriptionKey: 'archetype_mathias_confusion_desc',
           stats: {'Force': 2, 'Agilité': 3, 'Intelligence': 5, 'Volonté': 3, 'Perception': 4, 'Présence': 2},
           talents: ['Connaissances occultes', 'Discrétion', 'Observation', 'Informatique'],
           powers: ['Parole divine', 'Vision céleste'],
@@ -241,6 +357,8 @@ class GameData {
         'Baal (Guerre)': Archetype(
           name: 'Baal (Guerre)',
           description: 'Archétype Baal (Guerre)',
+          nameKey: 'archetype_baal_guerre_name',
+          descriptionKey: 'archetype_baal_guerre_desc',
           stats: {'Force': 5, 'Agilité': 4, 'Intelligence': 3, 'Volonté': 4, 'Perception': 3, 'Présence': 3},
           talents: ['Combat rapproché', 'Combat à distance', 'Intimidation', 'Résistance physique'],
           powers: ['Protection démoniaque', 'Malédiction'],
@@ -248,6 +366,8 @@ class GameData {
         'Andrealphus (Luxure)': Archetype(
           name: 'Andrealphus (Luxure)',
           description: 'Archétype Andrealphus (Luxure)',
+          nameKey: 'archetype_andrealphus_luxure_name',
+          descriptionKey: 'archetype_andrealphus_luxure_desc',
           stats: {'Force': 2, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 3, 'Perception': 3, 'Présence': 5},
           talents: ['Persuasion', 'Empathie', 'Discrétion', 'Observation'],
           powers: ['Tentation', 'Vision infernale'],
@@ -255,6 +375,8 @@ class GameData {
         'Sammael (Colère)': Archetype(
           name: 'Sammael (Colère)',
           description: 'Archétype Sammael (Colère)',
+          nameKey: 'archetype_sammael_colere_name',
+          descriptionKey: 'archetype_sammael_colere_desc',
           stats: {'Force': 5, 'Agilité': 3, 'Intelligence': 2, 'Volonté': 5, 'Perception': 3, 'Présence': 2},
           talents: ['Combat rapproché', 'Intimidation', 'Résistance physique', 'Résistance mentale'],
           powers: ['Malédiction', 'Protection démoniaque'],
@@ -262,6 +384,8 @@ class GameData {
         'Belial (Envie)': Archetype(
           name: 'Belial (Envie)',
           description: 'Archétype Belial (Envie)',
+          nameKey: 'archetype_belial_envie_name',
+          descriptionKey: 'archetype_belial_envie_desc',
           stats: {'Force': 2, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 3, 'Perception': 4, 'Présence': 4},
           talents: ['Persuasion', 'Observation', 'Discrétion', 'Connaissances occultes'],
           powers: ['Tentation', 'Vision infernale'],
@@ -269,6 +393,8 @@ class GameData {
         'Lilith (Orgueil)': Archetype(
           name: 'Lilith (Orgueil)',
           description: 'Archétype Lilith (Orgueil)',
+          nameKey: 'archetype_lilith_orgueil_name',
+          descriptionKey: 'archetype_lilith_orgueil_desc',
           stats: {'Force': 3, 'Agilité': 4, 'Intelligence': 4, 'Volonté': 4, 'Perception': 3, 'Présence': 5},
           talents: ['Persuasion', 'Empathie', 'Discrétion', 'Observation'],
           powers: ['Tentation', 'Parole infernale'],
@@ -276,6 +402,8 @@ class GameData {
         'Belphegor (Paresse)': Archetype(
           name: 'Belphegor (Paresse)',
           description: 'Archétype Belphegor (Paresse)',
+          nameKey: 'archetype_belphegor_paresse_name',
+          descriptionKey: 'archetype_belphegor_paresse_desc',
           stats: {'Force': 2, 'Agilité': 2, 'Intelligence': 3, 'Volonté': 2, 'Perception': 3, 'Présence': 3},
           talents: ['Persuasion', 'Discrétion', 'Observation', 'Connaissances occultes'],
           powers: ['Tentation', 'Vision infernale'],
@@ -283,6 +411,8 @@ class GameData {
         'Beelzebub (Gloutonnerie)': Archetype(
           name: 'Beelzebub (Gloutonnerie)',
           description: 'Archétype Beelzebub (Gloutonnerie)',
+          nameKey: 'archetype_beelzebub_gloutonnerie_name',
+          descriptionKey: 'archetype_beelzebub_gloutonnerie_desc',
           stats: {'Force': 4, 'Agilité': 2, 'Intelligence': 3, 'Volonté': 3, 'Perception': 3, 'Présence': 2},
           talents: ['Intimidation', 'Résistance physique', 'Observation', 'Survie'],
           powers: ['Malédiction', 'Protection démoniaque'],
@@ -290,6 +420,8 @@ class GameData {
         'Mammon (Avarice)': Archetype(
           name: 'Mammon (Avarice)',
           description: 'Archétype Mammon (Avarice)',
+          nameKey: 'archetype_mammon_avarice_name',
+          descriptionKey: 'archetype_mammon_avarice_desc',
           stats: {'Force': 2, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 3, 'Perception': 4, 'Présence': 3},
           talents: ['Persuasion', 'Observation', 'Informatique', 'Discrétion'],
           powers: ['Tentation', 'Vision infernale'],
@@ -297,6 +429,8 @@ class GameData {
         'Asmodée (Jeu)': Archetype(
           name: 'Asmodée (Jeu)',
           description: 'Archétype Asmodée (Jeu)',
+          nameKey: 'archetype_asmodee_jeu_name',
+          descriptionKey: 'archetype_asmodee_jeu_desc',
           stats: {'Force': 3, 'Agilité': 4, 'Intelligence': 4, 'Volonté': 3, 'Perception': 3, 'Présence': 4},
           talents: ['Persuasion', 'Observation', 'Discrétion', 'Informatique'],
           powers: ['Tentation', 'Parole infernale'],
@@ -304,6 +438,8 @@ class GameData {
         'Abalam (Folie)': Archetype(
           name: 'Abalam (Folie)',
           description: 'Archétype Abalam (Folie)',
+          nameKey: 'archetype_abalam_folie_name',
+          descriptionKey: 'archetype_abalam_folie_desc',
           stats: {'Force': 3, 'Agilité': 3, 'Intelligence': 2, 'Volonté': 2, 'Perception': 4, 'Présence': 3},
           talents: ['Intimidation', 'Observation', 'Connaissances occultes', 'Résistance mentale'],
           powers: ['Malédiction', 'Vision infernale'],
@@ -311,6 +447,8 @@ class GameData {
         'Andromalius (Jugement)': Archetype(
           name: 'Andromalius (Jugement)',
           description: 'Archétype Andromalius (Jugement)',
+          nameKey: 'archetype_andromalius_jugement_name',
+          descriptionKey: 'archetype_andromalius_jugement_desc',
           stats: {'Force': 4, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 4, 'Perception': 3, 'Présence': 2},
           talents: ['Intimidation', 'Combat rapproché', 'Connaissances religieuses', 'Observation'],
           powers: ['Parole infernale', 'Protection démoniaque'],
@@ -318,6 +456,8 @@ class GameData {
         'Baalberith (Administration)': Archetype(
           name: 'Baalberith (Administration)',
           description: 'Archétype Baalberith (Administration)',
+          nameKey: 'archetype_baalberith_administration_name',
+          descriptionKey: 'archetype_baalberith_administration_desc',
           stats: {'Force': 2, 'Agilité': 2, 'Intelligence': 5, 'Volonté': 3, 'Perception': 3, 'Présence': 2},
           talents: ['Connaissances religieuses', 'Informatique', 'Observation', 'Discrétion'],
           powers: ['Vision infernale', 'Parole infernale'],
@@ -325,6 +465,8 @@ class GameData {
         'Beleth (Cauchemars)': Archetype(
           name: 'Beleth (Cauchemars)',
           description: 'Archétype Beleth (Cauchemars)',
+          nameKey: 'archetype_beleth_cauchemars_name',
+          descriptionKey: 'archetype_beleth_cauchemars_desc',
           stats: {'Force': 3, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 4, 'Perception': 4, 'Présence': 2},
           talents: ['Connaissances occultes', 'Observation', 'Intimidation', 'Résistance mentale'],
           powers: ['Vision infernale', 'Malédiction'],
@@ -332,6 +474,8 @@ class GameData {
         'Bifrons (Destruction)': Archetype(
           name: 'Bifrons (Destruction)',
           description: 'Archétype Bifrons (Destruction)',
+          nameKey: 'archetype_bifrons_destruction_name',
+          descriptionKey: 'archetype_bifrons_destruction_desc',
           stats: {'Force': 5, 'Agilité': 3, 'Intelligence': 2, 'Volonté': 4, 'Perception': 3, 'Présence': 2},
           talents: ['Combat rapproché', 'Intimidation', 'Résistance physique', 'Survie'],
           powers: ['Protection démoniaque', 'Malédiction'],
@@ -339,6 +483,8 @@ class GameData {
         'Caym (Guerre)': Archetype(
           name: 'Caym (Guerre)',
           description: 'Archétype Caym (Guerre)',
+          nameKey: 'archetype_caym_guerre_name',
+          descriptionKey: 'archetype_caym_guerre_desc',
           stats: {'Force': 5, 'Agilité': 4, 'Intelligence': 3, 'Volonté': 4, 'Perception': 3, 'Présence': 3},
           talents: ['Combat rapproché', 'Combat à distance', 'Intimidation', 'Résistance physique'],
           powers: ['Protection démoniaque', 'Malédiction'],
@@ -346,6 +492,8 @@ class GameData {
         'Crocell (Eau)': Archetype(
           name: 'Crocell (Eau)',
           description: 'Archétype Crocell (Eau)',
+          nameKey: 'archetype_crocell_eau_name',
+          descriptionKey: 'archetype_crocell_eau_desc',
           stats: {'Force': 3, 'Agilité': 4, 'Intelligence': 3, 'Volonté': 3, 'Perception': 4, 'Présence': 3},
           talents: ['Survie', 'Observation', 'Protection', 'Résistance physique'],
           powers: ['Protection démoniaque', 'Vision infernale'],
@@ -353,6 +501,8 @@ class GameData {
         'Furfur (Tempêtes)': Archetype(
           name: 'Furfur (Tempêtes)',
           description: 'Archétype Furfur (Tempêtes)',
+          nameKey: 'archetype_furfur_tempetes_name',
+          descriptionKey: 'archetype_furfur_tempetes_desc',
           stats: {'Force': 4, 'Agilité': 5, 'Intelligence': 3, 'Volonté': 4, 'Perception': 3, 'Présence': 2},
           talents: ['Combat à distance', 'Observation', 'Survie', 'Résistance physique'],
           powers: ['Protection démoniaque', 'Malédiction'],
@@ -360,6 +510,8 @@ class GameData {
         'Gaziel (Feu)': Archetype(
           name: 'Gaziel (Feu)',
           description: 'Archétype Gaziel (Feu)',
+          nameKey: 'archetype_gaziel_feu_name',
+          descriptionKey: 'archetype_gaziel_feu_desc',
           stats: {'Force': 4, 'Agilité': 3, 'Intelligence': 3, 'Volonté': 4, 'Perception': 3, 'Présence': 3},
           talents: ['Combat rapproché', 'Intimidation', 'Résistance physique', 'Protection'],
           powers: ['Protection démoniaque', 'Malédiction'],
@@ -367,6 +519,8 @@ class GameData {
         'Haagenti (Transformation)': Archetype(
           name: 'Haagenti (Transformation)',
           description: 'Archétype Haagenti (Transformation)',
+          nameKey: 'archetype_haagenti_transformation_name',
+          descriptionKey: 'archetype_haagenti_transformation_desc',
           stats: {'Force': 3, 'Agilité': 4, 'Intelligence': 4, 'Volonté': 3, 'Perception': 4, 'Présence': 3},
           talents: ['Connaissances occultes', 'Discrétion', 'Observation', 'Survie'],
           powers: ['Vision infernale', 'Parole infernale'],
@@ -374,6 +528,8 @@ class GameData {
         'Malthus (Mort)': Archetype(
           name: 'Malthus (Mort)',
           description: 'Archétype Malthus (Mort)',
+          nameKey: 'archetype_malthus_mort_name',
+          descriptionKey: 'archetype_malthus_mort_desc',
           stats: {'Force': 4, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 5, 'Perception': 3, 'Présence': 2},
           talents: ['Intimidation', 'Connaissances occultes', 'Résistance mentale', 'Observation'],
           powers: ['Malédiction', 'Parole infernale'],
@@ -381,6 +537,8 @@ class GameData {
         'Nisroch (Vengeance)': Archetype(
           name: 'Nisroch (Vengeance)',
           description: 'Archétype Nisroch (Vengeance)',
+          nameKey: 'archetype_nisroch_vengeance_name',
+          descriptionKey: 'archetype_nisroch_vengeance_desc',
           stats: {'Force': 4, 'Agilité': 4, 'Intelligence': 3, 'Volonté': 4, 'Perception': 4, 'Présence': 2},
           talents: ['Combat rapproché', 'Intimidation', 'Observation', 'Résistance physique'],
           powers: ['Protection démoniaque', 'Malédiction'],
@@ -388,6 +546,8 @@ class GameData {
         'Nog (Mensonge)': Archetype(
           name: 'Nog (Mensonge)',
           description: 'Archétype Nog (Mensonge)',
+          nameKey: 'archetype_nog_mensonge_name',
+          descriptionKey: 'archetype_nog_mensonge_desc',
           stats: {'Force': 2, 'Agilité': 3, 'Intelligence': 5, 'Volonté': 3, 'Perception': 4, 'Présence': 4},
           talents: ['Persuasion', 'Discrétion', 'Observation', 'Connaissances occultes'],
           powers: ['Tentation', 'Parole infernale'],
@@ -395,6 +555,8 @@ class GameData {
         'Ouikka (Peur)': Archetype(
           name: 'Ouikka (Peur)',
           description: 'Archétype Ouikka (Peur)',
+          nameKey: 'archetype_ouikka_peur_name',
+          descriptionKey: 'archetype_ouikka_peur_desc',
           stats: {'Force': 3, 'Agilité': 4, 'Intelligence': 4, 'Volonté': 4, 'Perception': 4, 'Présence': 3},
           talents: ['Intimidation', 'Observation', 'Connaissances occultes', 'Résistance mentale'],
           powers: ['Vision infernale', 'Malédiction'],
@@ -402,6 +564,8 @@ class GameData {
         'Shaytan (Tentation)': Archetype(
           name: 'Shaytan (Tentation)',
           description: 'Archétype Shaytan (Tentation)',
+          nameKey: 'archetype_shaytan_tentation_name',
+          descriptionKey: 'archetype_shaytan_tentation_desc',
           stats: {'Force': 2, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 3, 'Perception': 3, 'Présence': 5},
           talents: ['Persuasion', 'Empathie', 'Discrétion', 'Observation'],
           powers: ['Tentation', 'Parole infernale'],
@@ -409,6 +573,8 @@ class GameData {
         'Uphir (Alchimie)': Archetype(
           name: 'Uphir (Alchimie)',
           description: 'Archétype Uphir (Alchimie)',
+          nameKey: 'archetype_uphir_alchimie_name',
+          descriptionKey: 'archetype_uphir_alchimie_desc',
           stats: {'Force': 2, 'Agilité': 2, 'Intelligence': 5, 'Volonté': 3, 'Perception': 4, 'Présence': 2},
           talents: ['Connaissances occultes', 'Observation', 'Informatique', 'Médecine'],
           powers: ['Vision infernale', 'Parole infernale'],
@@ -418,6 +584,8 @@ class GameData {
         'Indépendant': Archetype(
           name: 'Indépendant',
           description: 'Archétype Indépendant',
+          nameKey: 'archetype_independant_name',
+          descriptionKey: 'archetype_independant_desc',
           stats: {'Force': 3, 'Agilité': 3, 'Intelligence': 3, 'Volonté': 3, 'Perception': 3, 'Présence': 3},
           talents: ['Survie', 'Observation', 'Discrétion', 'Résistance mentale'],
           powers: ['Intuition'],
@@ -425,6 +593,8 @@ class GameData {
         'Rechercheur': Archetype(
           name: 'Rechercheur',
           description: 'Archétype Rechercheur',
+          nameKey: 'archetype_rechercheur_name',
+          descriptionKey: 'archetype_rechercheur_desc',
           stats: {'Force': 2, 'Agilité': 3, 'Intelligence': 5, 'Volonté': 4, 'Perception': 4, 'Présence': 2},
           talents: ['Connaissances occultes', 'Observation', 'Informatique', 'Résistance mentale'],
           powers: ['Intuition', 'Résistance'],
@@ -432,6 +602,8 @@ class GameData {
         'Croyant': Archetype(
           name: 'Croyant',
           description: 'Archétype Croyant',
+          nameKey: 'archetype_croyant_name',
+          descriptionKey: 'archetype_croyant_desc',
           stats: {'Force': 2, 'Agilité': 2, 'Intelligence': 3, 'Volonté': 5, 'Perception': 3, 'Présence': 4},
           talents: ['Connaissances religieuses', 'Empathie', 'Résistance mentale', 'Protection'],
           powers: ['Résistance', 'Détermination'],
@@ -439,6 +611,8 @@ class GameData {
         'Sceptique': Archetype(
           name: 'Sceptique',
           description: 'Archétype Sceptique',
+          nameKey: 'archetype_sceptique_name',
+          descriptionKey: 'archetype_sceptique_desc',
           stats: {'Force': 3, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 4, 'Perception': 3, 'Présence': 2},
           talents: ['Résistance mentale', 'Observation', 'Connaissances occultes', 'Résistance physique'],
           powers: ['Résistance', 'Détermination'],
@@ -446,6 +620,8 @@ class GameData {
         'Médiateur': Archetype(
           name: 'Médiateur',
           description: 'Archétype Médiateur',
+          nameKey: 'archetype_mediateur_name',
+          descriptionKey: 'archetype_mediateur_desc',
           stats: {'Force': 2, 'Agilité': 3, 'Intelligence': 4, 'Volonté': 3, 'Perception': 3, 'Présence': 5},
           talents: ['Persuasion', 'Empathie', 'Diplomatie', 'Observation'],
           powers: ['Intuition', 'Détermination'],
@@ -453,6 +629,8 @@ class GameData {
         'Chasseur': Archetype(
           name: 'Chasseur',
           description: 'Archétype Chasseur',
+          nameKey: 'archetype_chasseur_name',
+          descriptionKey: 'archetype_chasseur_desc',
           stats: {'Force': 4, 'Agilité': 4, 'Intelligence': 3, 'Volonté': 4, 'Perception': 4, 'Présence': 2},
           talents: ['Combat rapproché', 'Combat à distance', 'Survie', 'Observation'],
           powers: ['Résistance', 'Détermination'],
@@ -460,6 +638,8 @@ class GameData {
         'Érudit': Archetype(
           name: 'Érudit',
           description: 'Archétype Érudit',
+          nameKey: 'archetype_erudit_name',
+          descriptionKey: 'archetype_erudit_desc',
           stats: {'Force': 2, 'Agilité': 2, 'Intelligence': 5, 'Volonté': 3, 'Perception': 4, 'Présence': 3},
           talents: ['Connaissances religieuses', 'Connaissances occultes', 'Informatique', 'Observation'],
           powers: ['Intuition', 'Résistance'],
@@ -467,6 +647,8 @@ class GameData {
         'Médium': Archetype(
           name: 'Médium',
           description: 'Archétype Médium',
+          nameKey: 'archetype_medium_name',
+          descriptionKey: 'archetype_medium_desc',
           stats: {'Force': 2, 'Agilité': 3, 'Intelligence': 3, 'Volonté': 3, 'Perception': 5, 'Présence': 4},
           talents: ['Connaissances occultes', 'Empathie', 'Observation', 'Résistance mentale'],
           powers: ['Intuition', 'Résistance'],
@@ -483,6 +665,7 @@ class GameData {
         name: 'INS/MV v1',
         year: '1997',
         description: 'Première édition : règles du dé 666, six caractéristiques (Force, Agilité, Intelligence, Volonté, Perception, Présence), Archanges et Princes démoniaques.',
+        descriptionKey: 'edition_insmv_v1_description',
         changesFromPrevious: null,
         statNames: ['Force', 'Agilité', 'Intelligence', 'Volonté', 'Perception', 'Présence'],
         defaultStats: {'Force': 3, 'Agilité': 3, 'Intelligence': 3, 'Volonté': 3, 'Perception': 3, 'Présence': 3},
@@ -493,7 +676,9 @@ class GameData {
         name: 'INS/MV v2',
         year: '1993',
         description: 'Deuxième édition : évolution des règles et du contexte.',
+        descriptionKey: 'edition_insmv_v2_description',
         changesFromPrevious: 'Par rapport à la v1 : mise à jour des règles et du background.',
+        changesFromPreviousKey: 'edition_insmv_v2_changes',
         statNames: ['Force', 'Agilité', 'Intelligence', 'Volonté', 'Perception', 'Présence'],
         defaultStats: {'Force': 3, 'Agilité': 3, 'Intelligence': 3, 'Volonté': 3, 'Perception': 3, 'Présence': 3},
         archetypes: _getINSMVArchetypesV1(),
@@ -503,7 +688,9 @@ class GameData {
         name: 'INS/MV v3',
         year: '1997',
         description: 'Troisième édition : table unique multiple, même système de caractéristiques.',
+        descriptionKey: 'edition_insmv_v3_description',
         changesFromPrevious: 'Par rapport à la v2 : raffinement des tables et du système de résolution.',
+        changesFromPreviousKey: 'edition_insmv_v3_changes',
         statNames: ['Force', 'Agilité', 'Intelligence', 'Volonté', 'Perception', 'Présence'],
         defaultStats: {'Force': 3, 'Agilité': 3, 'Intelligence': 3, 'Volonté': 3, 'Perception': 3, 'Présence': 3},
         archetypes: _getINSMVArchetypesV1(),
@@ -513,7 +700,9 @@ class GameData {
         name: 'INS/MV v4',
         year: '2003',
         description: 'Quatrième édition : ligne unique multiple, ordre des caractéristiques modifié. Sixième caractéristique : Rêve (au lieu d\'Intelligence).',
+        descriptionKey: 'edition_insmv_v4_description',
         changesFromPrevious: 'Par rapport à la v3 : nouvel ordre des stats (Force, Volonté, Agilité, Perception, Présence, Rêve) et évolution des règles.',
+        changesFromPreviousKey: 'edition_insmv_v4_changes',
         statNames: ['Force', 'Volonté', 'Agilité', 'Perception', 'Présence', 'Rêve'],
         defaultStats: {'Force': 3, 'Volonté': 3, 'Agilité': 3, 'Perception': 3, 'Présence': 3, 'Rêve': 3},
         archetypes: _getINSMVArchetypesV1(),
@@ -523,7 +712,9 @@ class GameData {
         name: 'INS/MV v5',
         year: '2015',
         description: 'Génération perdue – cinquième édition (financement participatif). Résolution avec dés inférieurs à la caractéristique. Sixième caractéristique : Empathie.',
+        descriptionKey: 'edition_insmv_v5_description',
         changesFromPrevious: 'Par rapport à la v4 : nouveau système de résolution (dés < caractéristique), 6e caractéristique devient Empathie, contexte « Génération perdue ».',
+        changesFromPreviousKey: 'edition_insmv_v5_changes',
         statNames: ['Force', 'Volonté', 'Agilité', 'Perception', 'Présence', 'Empathie'],
         defaultStats: {'Force': 3, 'Volonté': 3, 'Agilité': 3, 'Perception': 3, 'Présence': 3, 'Empathie': 3},
         archetypes: _getINSMVArchetypesV1(),
@@ -533,7 +724,9 @@ class GameData {
         name: 'INS/MV v6',
         year: '2020',
         description: 'Sixième édition : Intuition en 6e caractéristique, règles actualisées.',
+        descriptionKey: 'edition_insmv_v6_description',
         changesFromPrevious: 'Par rapport à la v5 : 6e caractéristique devient Intuition (au lieu d\'Empathie), mise à jour du contexte et des règles.',
+        changesFromPreviousKey: 'edition_insmv_v6_changes',
         statNames: ['Force', 'Volonté', 'Agilité', 'Perception', 'Présence', 'Intuition'],
         defaultStats: {'Force': 3, 'Volonté': 3, 'Agilité': 3, 'Perception': 3, 'Présence': 3, 'Intuition': 3},
         archetypes: _getINSMVArchetypesV1(),

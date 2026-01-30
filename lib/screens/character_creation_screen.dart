@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/game_provider.dart';
 import '../providers/character_provider.dart';
 import '../models/game_system.dart';
@@ -32,6 +33,34 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
   static const int _maxStep = 4;
   final Random _random = Random();
 
+  /// Nom du type de personnage traduit (Ange/Démon/Humain → clés type_angels/type_demons/type_humans).
+  String _translatedTypeName(BuildContext context, String type) {
+    switch (type) {
+      case 'Ange':
+        return AppLocalizations.trSafe(context, 'type_angels');
+      case 'Démon':
+        return AppLocalizations.trSafe(context, 'type_demons');
+      case 'Humain':
+        return AppLocalizations.trSafe(context, 'type_humans');
+      default:
+        return type;
+    }
+  }
+
+  /// Clé de traduction pour la description du type, ou null si inconnu.
+  String? _translatedTypeDescriptionKey(String? type) {
+    switch (type) {
+      case 'Ange':
+        return 'type_desc_angel';
+      case 'Démon':
+        return 'type_desc_demon';
+      case 'Humain':
+        return 'type_desc_human';
+      default:
+        return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,14 +70,14 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
           children: [
             const Icon(Icons.create, color: AppTheme.medievalGold),
             const SizedBox(width: 8),
-            const Text('Forge du Héros'),
+            Text(AppLocalizations.trSafe(context, 'create_hero')),
           ],
         ),
         actions: [
           TextButton.icon(
             onPressed: _generateFullRandomCharacter,
             icon: const Icon(Icons.casino, color: AppTheme.medievalGold, size: 22),
-            label: const Text('Tout Aléatoire'),
+            label: Text(AppLocalizations.trSafe(context,'full_random')),
             style: TextButton.styleFrom(foregroundColor: AppTheme.medievalGold),
           ),
           const SizedBox(width: 8),
@@ -61,7 +90,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
             child: IconButton(
               icon: const Icon(Icons.save, color: AppTheme.medievalGold),
               onPressed: _generateCharacter,
-              tooltip: 'Forger le personnage',
+              tooltip: AppLocalizations.trSafe(context, 'forge_character'),
             ),
           ),
         ],
@@ -88,7 +117,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                     Icon(Icons.warning, size: 64, color: AppTheme.medievalGold.withValues(alpha: 0.5)),
                     const SizedBox(height: 16),
                     Text(
-                      'Sélectionnez un système de jeu',
+                      AppLocalizations.trSafe(context,'select_game_system'),
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             color: AppTheme.medievalBronze,
                           ),
@@ -140,7 +169,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                                 OutlinedButton.icon(
                                   onPressed: details.onStepCancel,
                                   icon: const Icon(Icons.arrow_back, size: 18),
-                                  label: const Text('Précédent'),
+                                  label: Text(AppLocalizations.trSafe(context,'step_prev')),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: AppTheme.medievalDarkBrown,
                                     side: BorderSide(color: AppTheme.medievalGold),
@@ -151,7 +180,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                               ElevatedButton.icon(
                                 onPressed: details.onStepContinue,
                                 icon: Icon(_currentStep == _maxStep ? Icons.check_circle : Icons.arrow_forward, size: 18),
-                                label: Text(_currentStep == _maxStep ? 'Récapitulatif' : 'Suivant'),
+                                label: Text(_currentStep == _maxStep ? AppLocalizations.trSafe(context, 'step_summary') : AppLocalizations.trSafe(context, 'step_next')),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.medievalGold,
                                   foregroundColor: AppTheme.medievalDarkBrown,
@@ -163,8 +192,8 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                       },
                       steps: [
                         Step(
-                          title: const Text('Type & options'),
-                          subtitle: _selectedCharacterType != null ? Text(_selectedCharacterType!) : null,
+                          title: Text(AppLocalizations.trSafe(context,'type_and_options')),
+                          subtitle: _selectedCharacterType != null ? Text(_translatedTypeName(context, _selectedCharacterType!)) : null,
                           isActive: _currentStep >= 0,
                           state: _currentStep > 0 ? StepState.complete : StepState.indexed,
                           content: Column(
@@ -178,7 +207,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                           ),
                         ),
                         Step(
-                          title: const Text('Supérieur'),
+                          title: Text(AppLocalizations.trSafe(context, 'superior')),
                           subtitle: _selectedSuperior != null ? Text(_selectedSuperior!, overflow: TextOverflow.ellipsis) : null,
                           isActive: _currentStep >= 1,
                           state: _currentStep > 1 ? StepState.complete : StepState.indexed,
@@ -188,7 +217,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                           ),
                         ),
                         Step(
-                          title: const Text('Archétype'),
+                          title: Text(AppLocalizations.trSafe(context, 'archetype')),
                           subtitle: _selectedArchetype != null ? Text(_selectedArchetype!, overflow: TextOverflow.ellipsis) : null,
                           isActive: _currentStep >= 2,
                           state: _currentStep > 2 ? StepState.complete : StepState.indexed,
@@ -196,7 +225,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                             constraints: const BoxConstraints(maxHeight: 400),
                             child: SingleChildScrollView(
                               child: _selectedCharacterType == null
-                                  ? const Padding(padding: EdgeInsets.all(16), child: Text('Choisissez d\'abord un type.'))
+                                  ? Padding(padding: const EdgeInsets.all(16), child: Text(AppLocalizations.trSafe(context,'choose_type_first')))
                                   : Column(
                                       crossAxisAlignment: CrossAxisAlignment.stretch,
                                       mainAxisSize: MainAxisSize.min,
@@ -219,14 +248,14 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                           ),
                         ),
                         Step(
-                        title: const Text('Nom'),
+                        title: Text(AppLocalizations.trSafe(context, 'name')),
                         subtitle: Text(_nameOrigin != 'Fantasy' || _nameStyle != 'Classique' ? '$_nameOrigin · $_nameStyle' : ''),
                         isActive: _currentStep >= 3,
                         state: _currentStep > 3 ? StepState.complete : StepState.indexed,
                         content: _buildNameGenerator(),
                       ),
                       Step(
-                        title: const Text('Récapitulatif'),
+                        title: Text(AppLocalizations.trSafe(context, 'step_summary')),
                         isActive: _currentStep >= 4,
                         state: StepState.indexed,
                         content: _buildSummaryStep(game, gameProvider),
@@ -258,7 +287,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                 OutlinedButton.icon(
                   onPressed: () => setState(() => _currentStep--),
                   icon: const Icon(Icons.arrow_back, size: 18),
-                  label: const Text('Précédent'),
+                  label: Text(AppLocalizations.trSafe(context,'step_prev')),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppTheme.medievalDarkBrown,
                     side: BorderSide(color: AppTheme.medievalGold),
@@ -286,7 +315,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                   }
                 },
                 icon: Icon(_currentStep == _maxStep ? Icons.check_circle : Icons.arrow_forward, size: 18),
-                label: Text(_currentStep == _maxStep ? 'Récapitulatif' : 'Suivant'),
+                label: Text(_currentStep == _maxStep ? AppLocalizations.trSafe(context, 'step_summary') : AppLocalizations.trSafe(context, 'step_next')),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.medievalGold,
                   foregroundColor: AppTheme.medievalDarkBrown,
@@ -323,7 +352,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                   Icon(Icons.person, color: AppTheme.medievalGold, size: 24),
                   const SizedBox(width: 8),
                   Text(
-                    'Type de personnage',
+                    AppLocalizations.trSafe(context, 'type_character_title'),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppTheme.medievalDarkBrown,
@@ -353,7 +382,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                     ),
                     child: ChoiceChip(
                       label: Text(
-                        type,
+                        _translatedTypeName(context, type),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: _selectedCharacterType == type
@@ -373,31 +402,40 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                   );
                 }).toList(),
               ),
-              if (_selectedCharacterType != null && game.characterTypeDescriptions[_selectedCharacterType] != null) ...[
+              if (_selectedCharacterType != null) ...[
                 const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppTheme.medievalGold.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.medievalGold.withValues(alpha: 0.25)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.info_outline, color: AppTheme.medievalGold, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          game.characterTypeDescriptions[_selectedCharacterType]!,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppTheme.medievalDarkBrown,
-                                fontStyle: FontStyle.italic,
-                              ),
-                        ),
+                Builder(
+                  builder: (context) {
+                    final descKey = _translatedTypeDescriptionKey(_selectedCharacterType);
+                    final desc = descKey != null
+                        ? AppLocalizations.trSafe(context, descKey)
+                        : game.characterTypeDescriptions[_selectedCharacterType];
+                    if (desc == null || desc.isEmpty) return const SizedBox();
+                    return Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.medievalGold.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppTheme.medievalGold.withValues(alpha: 0.25)),
                       ),
-                    ],
-                  ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.info_outline, color: AppTheme.medievalGold, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              desc,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: AppTheme.medievalDarkBrown,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ],
             ],
@@ -426,10 +464,10 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                 children: [
                   Icon(Icons.people, color: AppTheme.medievalGold, size: 20),
                   const SizedBox(width: 8),
-                  const Text('Personnage Non-Joueur (PNJ)'),
+                  Text(AppLocalizations.trSafe(context, 'npc_long')),
                 ],
               ),
-              subtitle: Text(_isNPC && _npcDiminished ? 'Capacités réduites' : _isNPC ? 'Même niveau que joueur' : 'Personnage joueur'),
+              subtitle: Text(_isNPC && _npcDiminished ? AppLocalizations.trSafe(context, 'capabilities_reduced') : _isNPC ? AppLocalizations.trSafe(context, 'same_level_as_player') : AppLocalizations.trSafe(context, 'player_character')),
               value: _isNPC,
               onChanged: (value) {
                 setState(() {
@@ -440,8 +478,8 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
             ),
             if (_isNPC) ...[
               SwitchListTile(
-                title: const Text('PNJ amoindri'),
-                subtitle: const Text('Désactiver = PNJ avec caractéristiques de joueur'),
+                title: Text(AppLocalizations.trSafe(context, 'npc_diminished')),
+                subtitle: Text(AppLocalizations.trSafe(context, 'npc_subtitle_diminished')),
                 value: _npcDiminished,
                 onChanged: (value) => setState(() => _npcDiminished = value),
                 activeThumbColor: AppTheme.medievalGold,
@@ -467,7 +505,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                         Icon(Icons.info_outline, color: AppTheme.medievalGold, size: 18),
                         const SizedBox(width: 8),
                         Text(
-                          'Caractéristiques des PNJ :',
+                          AppLocalizations.trSafe(context, 'npc_characteristics_section'),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: AppTheme.medievalDarkBrown,
@@ -477,10 +515,10 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    _buildNPCInfoRow('Points de caractéristiques', 'Réduits'),
-                    _buildNPCInfoRow('Talents', '2-3 (vs 3-5 pour joueurs)'),
-                    _buildNPCInfoRow('Pouvoirs', '1-2 (vs 2-3 pour joueurs)'),
-                    _buildNPCInfoRow('Compétences', 'Moins nombreuses et niveau réduit'),
+                    _buildNPCInfoRow(AppLocalizations.trSafe(context, 'npc_stat_points_label'), AppLocalizations.trSafe(context, 'npc_reduced_label')),
+                    _buildNPCInfoRow(AppLocalizations.trSafe(context, 'talents'), AppLocalizations.trSafe(context, 'npc_talents_range')),
+                    _buildNPCInfoRow(AppLocalizations.trSafe(context, 'powers'), AppLocalizations.trSafe(context, 'npc_powers_range')),
+                    _buildNPCInfoRow(AppLocalizations.trSafe(context, 'competences'), AppLocalizations.trSafe(context, 'npc_competences_hint')),
                   ],
                 ),
               ),
@@ -531,7 +569,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
         ),
       if (_selectedCharacterType != null)
         Chip(
-          label: Text(_selectedCharacterType!, style: const TextStyle(fontSize: 12)),
+          label: Text(_translatedTypeName(context, _selectedCharacterType!), style: const TextStyle(fontSize: 12)),
           backgroundColor: AppTheme.medievalGold.withValues(alpha: 0.2),
         ),
       if (_selectedSuperior != null)
@@ -541,7 +579,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
         ),
       if (_isNPC)
         Chip(
-          label: Text(_npcDiminished ? 'PNJ amoindri' : 'PNJ pleine puissance', style: const TextStyle(fontSize: 11)),
+          label: Text(_npcDiminished ? AppLocalizations.trSafe(context,'npc_diminished') : AppLocalizations.trSafe(context,'npc_full_power'), style: const TextStyle(fontSize: 11)),
           backgroundColor: AppTheme.medievalBronze.withValues(alpha: 0.2),
         ),
     ];
@@ -559,13 +597,13 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
   String _superiorLabelForType(String? type) {
     switch (type) {
       case 'Ange':
-        return 'Supérieur (Blandine, Michel, etc.)';
+        return AppLocalizations.trSafe(context, 'superior_title_angel');
       case 'Démon':
-        return 'Supérieur (Baal, Lilith, etc.)';
+        return AppLocalizations.trSafe(context, 'superior_title_demon');
       case 'Humain':
-        return 'Supérieur (Indépendant, etc.)';
+        return AppLocalizations.trSafe(context, 'superior_title_human');
       default:
-        return 'Supérieur (archange ou prince)';
+        return AppLocalizations.trSafe(context, 'superior_title_generic');
     }
   }
 
@@ -575,7 +613,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
       return Padding(
         padding: const EdgeInsets.all(16),
         child: Text(
-          'Aucun supérieur pour ce type.',
+          AppLocalizations.trSafe(context, 'no_superior_for_type'),
           style: TextStyle(color: AppTheme.medievalBronze, fontStyle: FontStyle.italic),
         ),
       );
@@ -614,25 +652,26 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                       setState(() => _selectedSuperior = superiors[_random.nextInt(superiors.length)]);
                     },
                     icon: const Icon(Icons.casino, size: 18),
-                    label: const Text('Aléatoire'),
+                    label: Text(AppLocalizations.trSafe(context, 'random')),
                     style: OutlinedButton.styleFrom(foregroundColor: AppTheme.medievalGold),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-              ...superiors.take(12).map((s) {
-                return RadioListTile<String>(
-                  title: Text(s),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: superiors.take(12).map((s) => RadioListTile<String>(
+                  title: Text(AppLocalizations.trSuperiorName(context, s)),
                   value: s,
                   groupValue: _selectedSuperior,
                   onChanged: (value) => setState(() => _selectedSuperior = value),
                   activeColor: AppTheme.medievalGold,
-                );
-              }),
+                )).toList(),
+              ),
               if (superiors.length > 12)
                 TextButton(
                   onPressed: () => _showAllSuperiors(superiors),
-                  child: Text('Voir tous (${superiors.length})'),
+                  child: Text(AppLocalizations.trSafe(context, 'see_all_count', {'count': '${superiors.length}'})),
                 ),
             ],
           ),
@@ -645,24 +684,22 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Choisir un supérieur'),
+        title: Text(AppLocalizations.trSafe(context,'choose_superior')),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.builder(
             shrinkWrap: true,
             itemCount: superiors.length,
-            itemBuilder: (ctx, i) {
-              return RadioListTile<String>(
-                title: Text(superiors[i]),
-                value: superiors[i],
-                groupValue: _selectedSuperior,
-                onChanged: (v) {
-                  setState(() => _selectedSuperior = v);
-                  Navigator.pop(ctx);
-                },
-                activeColor: AppTheme.medievalGold,
-              );
-            },
+            itemBuilder: (ctx, i) => RadioListTile<String>(
+              title: Text(superiors[i]),
+              value: superiors[i],
+              groupValue: _selectedSuperior,
+              onChanged: (v) {
+                setState(() => _selectedSuperior = v);
+                Navigator.pop(ctx);
+              },
+              activeColor: AppTheme.medievalGold,
+            ),
           ),
         ),
       ),
@@ -678,27 +715,27 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Récapitulatif',
+              AppLocalizations.trSafe(context, 'step_summary'),
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppTheme.medievalDarkBrown,
                   ),
             ),
             const SizedBox(height: 12),
-            _buildInfoRow('Jeu', game.name),
-            _buildInfoRow('Édition', editionName),
-            _buildInfoRow('Type', _selectedCharacterType ?? '—'),
-            _buildInfoRow('Supérieur', _selectedSuperior ?? 'Aléatoire'),
-            _buildInfoRow('Archétype', _useArchetype ? (_selectedArchetype ?? 'Aléatoire') : 'Non'),
-            _buildInfoRow('PNJ', _isNPC ? (_npcDiminished ? 'Oui (amoindri)' : 'Oui (pleine puissance)') : 'Non'),
-            _buildInfoRow('Nom', '$_nameOrigin · $_nameStyle'),
+            _buildInfoRow(AppLocalizations.trSafe(context, 'game_label'), game.name),
+            _buildInfoRow(AppLocalizations.trSafe(context,'edition_label'), editionName),
+            _buildInfoRow(AppLocalizations.trSafe(context, 'type_label'), _selectedCharacterType != null ? _translatedTypeName(context, _selectedCharacterType!) : '—'),
+            _buildInfoRow(AppLocalizations.trSafe(context,'superior'), _selectedSuperior != null ? AppLocalizations.trSuperiorName(context, _selectedSuperior!) : AppLocalizations.trSafe(context,'random')),
+            _buildInfoRow(AppLocalizations.trSafe(context, 'archetype_label'), _useArchetype ? (_selectedArchetype ?? AppLocalizations.trSafe(context, 'random_value')) : AppLocalizations.trSafe(context, 'no')),
+            _buildInfoRow(AppLocalizations.trSafe(context, 'npc'), _isNPC ? (_npcDiminished ? AppLocalizations.trSafe(context, 'npc_yes_diminished') : AppLocalizations.trSafe(context, 'npc_yes_full')) : AppLocalizations.trSafe(context, 'no')),
+            _buildInfoRow(AppLocalizations.trSafe(context, 'name'), '$_nameOrigin · $_nameStyle'),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _generateCharacter,
                 icon: const Icon(Icons.check_circle),
-                label: const Text('Créer le personnage'),
+                label: Text(AppLocalizations.trSafe(context,'create_character')),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.medievalGold,
                   foregroundColor: AppTheme.medievalDarkBrown,
@@ -749,7 +786,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                   Icon(Icons.auto_awesome, color: AppTheme.medievalGold, size: 24),
                   const SizedBox(width: 8),
                   Text(
-                    'Générateur de nom',
+                    AppLocalizations.trSafe(context, 'name_generator'),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppTheme.medievalDarkBrown,
@@ -762,11 +799,11 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      initialValue: _nameOrigin,
+                      value: _nameOrigin,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        labelText: 'Origine',
+                        labelText: AppLocalizations.trSafe(context,'origin'),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: AppTheme.medievalBronze, width: 2),
@@ -802,11 +839,11 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      initialValue: _nameStyle,
+                      value: _nameStyle,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        labelText: 'Style',
+                        labelText: AppLocalizations.trSafe(context, 'style'),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: AppTheme.medievalBronze, width: 2),
@@ -854,35 +891,32 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
     final characterProvider = context.read<CharacterProvider>();
     final game = gameProvider.currentGame;
     if (game == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sélectionnez un système de jeu')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.trSafe(context,'select_game_system'))));
       return;
     }
     final editionId = gameProvider.currentEditionId ?? (game.editions.isEmpty ? '' : game.editions.first.id);
     final edition = game.getEdition(editionId);
     if (edition == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Édition non trouvée')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.trSafe(context, 'edition_not_found'))));
       return;
     }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.casino, color: AppTheme.medievalGold),
-            SizedBox(width: 8),
-            Text('Tout Aléatoire'),
+            const Icon(Icons.casino, color: AppTheme.medievalGold),
+            const SizedBox(width: 8),
+            Text(AppLocalizations.trSafe(ctx, 'full_random_title')),
           ],
         ),
-        content: const Text(
-          'Créer un personnage entièrement aléatoire (type, supérieur, archétype, nom, caractéristiques, talents, pouvoirs…) ? '
-          'Vous pourrez tout modifier sur la fiche ensuite.',
-        ),
+        content: Text(AppLocalizations.trSafe(ctx, 'full_random_dialog_message')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.trSafe(ctx, 'cancel'))),
           FilledButton.icon(
             onPressed: () => Navigator.pop(ctx, true),
             icon: const Icon(Icons.casino, size: 20),
-            label: const Text('Générer'),
+            label: Text(AppLocalizations.trSafe(context, 'generate')),
             style: FilledButton.styleFrom(backgroundColor: AppTheme.medievalGold, foregroundColor: AppTheme.medievalDarkBrown),
           ),
         ],
@@ -924,9 +958,9 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
       characterProvider.setCurrentCharacter(character);
       if (!mounted) return;
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CharacterDetailScreen()));
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Personnage aléatoire créé — modifiez la fiche si besoin.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.trSafe(context, 'random_character_created'))));
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppLocalizations.trSafe(context, 'error_generic')}: $e')));
     }
   }
 
@@ -935,7 +969,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
       case 0:
         if (_selectedCharacterType == null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Choisissez un type de personnage avant de continuer.')),
+            SnackBar(content: Text(AppLocalizations.trSafe(context, 'choose_type_before_continue'))),
           );
           return false;
         }
@@ -944,7 +978,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
         final superiors = game.superiors[_selectedCharacterType];
         if (superiors != null && superiors.isNotEmpty && (_selectedSuperior == null || _selectedSuperior!.isEmpty)) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Choisissez un supérieur (archange ou prince) avant de continuer.')),
+            SnackBar(content: Text(AppLocalizations.trSafe(context, 'choose_superior_before'))),
           );
           return false;
         }
@@ -963,19 +997,20 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
 
     if (game == null || _selectedCharacterType == null) {
       developer.log(('❌ [CHAR_CREATION] Erreur: Type de personnage non sélectionné').toString());
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Veuillez sélectionner un type de personnage')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.trSafe(context, 'select_type_please'))));
       return;
     }
 
     final editionName = game.getEdition(gameProvider.currentEditionId ?? '')?.name ?? '';
+    final cancelLabel = AppLocalizations.trSafe(context, 'cancel');
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.check_circle_outline, color: AppTheme.medievalGold),
-            SizedBox(width: 8),
-            Text('Créer ce personnage ?'),
+            const Icon(Icons.check_circle_outline, color: AppTheme.medievalGold),
+            const SizedBox(width: 8),
+            Text(AppLocalizations.trSafe(context, 'create_character_confirm')),
           ],
         ),
         content: SingleChildScrollView(
@@ -983,21 +1018,21 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Vous êtes sur le point de forger le personnage avec les choix suivants :',
-                style: TextStyle(fontWeight: FontWeight.w500),
+              Text(
+                AppLocalizations.trSafe(context, 'create_character_intro'),
+                style: const TextStyle(fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 12),
-              _buildInfoRow('Jeu', game.name),
-              _buildInfoRow('Édition', editionName),
-              _buildInfoRow('Type', _selectedCharacterType ?? '—'),
-              _buildInfoRow('Supérieur', _selectedSuperior ?? '—'),
-              _buildInfoRow('Archétype', _useArchetype ? (_selectedArchetype ?? 'Aléatoire') : 'Non'),
-              _buildInfoRow('PNJ', _isNPC ? (_npcDiminished ? 'Oui (amoindri)' : 'Oui (pleine puissance)') : 'Non'),
-              _buildInfoRow('Nom', '$_nameOrigin · $_nameStyle'),
+              _buildInfoRow(AppLocalizations.trSafe(context, 'game_label'), game.name),
+              _buildInfoRow(AppLocalizations.trSafe(context,'edition_label'), editionName),
+              _buildInfoRow(AppLocalizations.trSafe(context, 'type_label'), _selectedCharacterType != null ? _translatedTypeName(context, _selectedCharacterType!) : '—'),
+              _buildInfoRow(AppLocalizations.trSafe(context,'superior'), _selectedSuperior != null ? AppLocalizations.trSuperiorName(context, _selectedSuperior!) : '—'),
+              _buildInfoRow(AppLocalizations.trSafe(context, 'archetype_label'), _useArchetype ? (_selectedArchetype ?? AppLocalizations.trSafe(context, 'random_value')) : AppLocalizations.trSafe(context, 'no')),
+              _buildInfoRow(AppLocalizations.trSafe(context, 'npc'), _isNPC ? (_npcDiminished ? AppLocalizations.trSafe(context, 'npc_yes_diminished') : AppLocalizations.trSafe(context, 'npc_yes_full')) : AppLocalizations.trSafe(context, 'no')),
+              _buildInfoRow(AppLocalizations.trSafe(context, 'name'), '$_nameOrigin · $_nameStyle'),
               const SizedBox(height: 8),
               Text(
-                'Vous pourrez modifier tous les détails sur la fiche après création.',
+                AppLocalizations.trSafe(context, 'create_character_edit_hint'),
                 style: Theme.of(ctx).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
               ),
             ],
@@ -1006,12 +1041,12 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Annuler'),
+            child: Text(cancelLabel),
           ),
           FilledButton.icon(
             onPressed: () => Navigator.pop(ctx, true),
             icon: const Icon(Icons.check_circle, size: 20),
-            label: const Text('Créer le personnage'),
+            label: Text(AppLocalizations.trSafe(context, 'create_character')),
             style: FilledButton.styleFrom(
               backgroundColor: AppTheme.medievalGold,
               foregroundColor: AppTheme.medievalDarkBrown,
@@ -1056,7 +1091,7 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
     } catch (e) {
       developer.log(('❌ [CHAR_CREATION] Erreur lors de la génération: $e').toString());
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppLocalizations.trSafe(context, 'error_generic')}: $e')));
       }
     }
   }

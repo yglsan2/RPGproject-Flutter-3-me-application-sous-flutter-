@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../providers/game_provider.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 
 class ArchetypeSelector extends StatelessWidget {
@@ -42,7 +43,7 @@ class ArchetypeSelector extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Aucun archétype pour ce type. La génération sera aléatoire.',
+                      AppLocalizations.trSafe(context, 'no_archetype_for_type'),
                       style: TextStyle(color: AppTheme.medievalDarkBrown, fontStyle: FontStyle.italic),
                     ),
                   ),
@@ -85,7 +86,7 @@ class ArchetypeSelector extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   SwitchListTile(
-                    title: const Text('Utiliser un archétype'),
+                    title: Text(AppLocalizations.trSafe(context, 'use_archetype')),
                     value: useArchetype,
                     onChanged: onUseArchetypeChanged,
                     activeThumbColor: AppTheme.medievalGold,
@@ -101,7 +102,7 @@ class ArchetypeSelector extends StatelessWidget {
                             decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        labelText: 'Archétype',
+                        labelText: AppLocalizations.trSafe(context, 'archetype'),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: AppTheme.medievalBronze, width: 2),
@@ -122,12 +123,18 @@ class ArchetypeSelector extends StatelessWidget {
                             children: [
                               Icon(Icons.casino, color: AppTheme.medievalGold, size: 18),
                               const SizedBox(width: 8),
-                              const Text('Aléatoire complet'),
+                              Text(AppLocalizations.trSafe(context, 'full_random_complete')),
                             ],
                           ),
                         ),
                         ...archetypes.keys.map((name) {
                           final archetype = archetypes[name]!;
+                          final displayName = archetype.nameKey != null
+                              ? AppLocalizations.trSafe(context, archetype.nameKey!)
+                              : archetype.name;
+                          final displayDesc = archetype.descriptionKey != null
+                              ? AppLocalizations.trSafe(context, archetype.descriptionKey!)
+                              : archetype.description;
                           return DropdownMenuItem(
                             value: name,
                             child: ConstrainedBox(
@@ -143,7 +150,7 @@ class ArchetypeSelector extends StatelessWidget {
                                       const SizedBox(width: 8),
                                       Flexible(
                                         child: Text(
-                                          name,
+                                          displayName,
                                           style: const TextStyle(fontWeight: FontWeight.bold),
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -153,7 +160,7 @@ class ArchetypeSelector extends StatelessWidget {
                                   Padding(
                                     padding: const EdgeInsets.only(left: 26, top: 4),
                                     child: Text(
-                                      archetype.description,
+                                      displayDesc,
                                       style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
@@ -177,7 +184,7 @@ class ArchetypeSelector extends StatelessWidget {
                             }
                           },
                           icon: const Icon(Icons.casino, size: 18),
-                          label: const Text('Tirage'),
+                          label: Text(AppLocalizations.trSafe(context, 'draw')),
                           style: OutlinedButton.styleFrom(foregroundColor: AppTheme.medievalGold),
                         ),
                       ],
